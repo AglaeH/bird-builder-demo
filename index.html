@@ -1,0 +1,1031 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Bird Builder AR Demo</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#f4ecd8;
+      --panel2:#efe3c6;
+      --ink:#2b2b2b;
+      --muted:#6b6256;
+      --accent:#f0c14b;
+      --good:#2e7d32;
+      --bad:#c62828;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box;font-family: ui-sans-serif, system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;}
+    body{margin:0;background:var(--bg);color:#fff;overflow:hidden;}
+    #app{position:relative;height:100dvh;width:100vw;background:#000;}
+    video#camera{
+      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+      filter:saturate(1.05) contrast(1.05);
+      background:#000;
+    }
+    #overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:14px;pointer-events:none;}
+    .topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;}
+    .pill{
+      pointer-events:auto;
+      display:inline-flex;align-items:center;gap:8px;
+      padding:8px 12px;border-radius:999px;
+      background:rgba(20,20,20,.55);backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:14px;
+    }
+    .pill strong{font-weight:700;}
+    .stage{
+      pointer-events:none;
+      display:flex;align-items:center;justify-content:center;
+      min-height:44vh;
+    }
+    .birdCard{
+      pointer-events:none;
+      width:min(520px,92vw);
+      background:rgba(20,20,20,.28);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:26px;
+      padding:14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+    }
+    .birdCanvas{width:100%;display:flex;align-items:center;justify-content:center;}
+    .birdCanvas svg{width:min(420px,86vw);height:auto;}
+    .hintRow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .chip{
+      pointer-events:none;
+      background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.14);
+      padding:6px 10px;border-radius:999px;
+      font-size:12px;
+    }
+
+    .bottom{
+      pointer-events:auto;
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    }
+    button{
+      border:0;border-radius:16px;
+      padding:12px 14px;font-size:15px;
+      background:#ffffff; color:#111;
+      box-shadow: 0 10px 18px rgba(0,0,0,.25);
+      cursor:pointer;
+    }
+    button.secondary{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.18);backdrop-filter: blur(8px);}
+    button:disabled{opacity:.45;cursor:not-allowed;}
+    .toast{
+      pointer-events:none;
+      position:absolute;left:50%;transform:translateX(-50%);
+      bottom:110px;
+      background:rgba(0,0,0,.65);color:#fff;
+      padding:10px 14px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+      font-size:14px;
+      opacity:0;transition:opacity .2s;
+    }
+    .toast.show{opacity:1;}
+
+    /* Modal */
+    .modal{
+      position:absolute;inset:0;
+      background:rgba(0,0,0,.55);
+      display:flex;align-items:center;justify-content:center;
+      padding:14px;
+      z-index:50;
+    }
+    .hidden{display:none;}
+    .box{
+      width:min(760px,96vw);
+      background:var(--panel);
+      color:var(--ink);
+      border-radius:22px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(0,0,0,.08);
+      overflow:hidden;
+    }
+    .boxHeader{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 14px 10px 14px;
+      background:linear-gradient(180deg, var(--panel), var(--panel2));
+      border-bottom:1px solid rgba(0,0,0,.08);
+    }
+    .title{font-size:18px;font-weight:800;}
+    .xbtn{
+      width:38px;height:38px;border-radius:12px;border:0;
+      background:rgba(0,0,0,.08);cursor:pointer;
+      font-size:18px;line-height:1;
+    }
+    .stepDots{
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+      padding:10px 14px 0 14px;
+    }
+    .dot{
+      width:34px;height:34px;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.10);
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+    }
+    .dot.active{background:var(--accent);border-color:rgba(0,0,0,.14);}
+    .dot.done{background:rgba(46,125,50,.18);border-color:rgba(46,125,50,.25);color:var(--good);}
+    .content{
+      padding:12px 14px 14px 14px;
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .clueBox{
+      background:rgba(255,255,255,.65);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:16px;
+      padding:12px;
+      line-height:1.35;
+    }
+    .clueBox small{color:var(--muted);display:block;margin-top:6px;}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+    .opt{
+      background:#fff;
+      border:2px solid rgba(0,0,0,.10);
+      border-radius:18px;
+      padding:12px;
+      cursor:pointer;
+      display:flex;gap:10px;align-items:center;
+      min-height:88px;
+      transition:transform .06s ease, border-color .06s ease;
+    }
+    .opt:hover{transform:translateY(-1px);}
+    .opt svg{width:56px;height:56px;flex:0 0 auto;}
+    .opt .lbl{font-weight:800;}
+    .opt .desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.25;}
+    .opt.correct{border-color:rgba(46,125,50,.55);background:rgba(46,125,50,.08);}
+    .opt.wrong{border-color:rgba(198,40,40,.55);background:rgba(198,40,40,.08);}
+    .footer{
+      padding:12px 14px 14px 14px;
+      display:flex;gap:10px;justify-content:space-between;align-items:center;
+      background:linear-gradient(180deg, var(--panel2), var(--panel));
+      border-top:1px solid rgba(0,0,0,.08);
+    }
+    .footer .left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .kpi{font-size:13px;color:var(--muted);}
+    .footer .right{display:flex;gap:10px;align-items:center;}
+    .btnSmall{padding:10px 12px;border-radius:14px;font-size:14px;}
+    .btnPrimary{background:#1b1b1b;color:#fff;}
+    .btnWarn{background:#9c1d1d;color:#fff;}
+
+    /* Reveal */
+    .revealBody{padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;}
+    .revealTag{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(240,193,75,.25);
+      border:1px solid rgba(0,0,0,.10);
+      padding:8px 12px;border-radius:999px;
+      font-weight:800;
+    }
+    .summary{
+      width:100%;
+      background:#fff;border:1px solid rgba(0,0,0,.10);
+      border-radius:18px;padding:12px;line-height:1.4;
+    }
+    .bob{
+      animation:bob 1.8s ease-in-out infinite;
+      transform-origin:center;
+    }
+    @keyframes bob{
+      0%,100%{transform:translateY(0px);}
+      50%{transform:translateY(-6px);}
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <video id="camera" autoplay playsinline muted></video>
+
+  <div id="overlay">
+    <div class="topbar">
+      <div class="pill"><strong id="birdName">鳥</strong> <span id="birdSub" style="opacity:.85"></span></div>
+      <div class="pill">線索 <strong id="clueCount">0</strong>/5　|　提示 <strong id="hintLeft">2</strong>/2</div>
+    </div>
+
+    <div class="stage">
+      <div class="birdCard">
+        <div class="birdCanvas" id="birdCanvas"></div>
+        <div class="hintRow" id="clueChips"></div>
+        <div style="font-size:12px;opacity:.9;text-align:center;line-height:1.35">
+          掃 QR 進入後：先<strong>餵鳥收線索</strong>，集滿 5 張才可<strong>開始辨認</strong>。<br/>
+          答錯會重置線索；答對會<strong>拼出部位</strong>，最後整隻鳥會動一下。
+        </div>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <div class="bottom">
+      <button class="secondary" id="btnCamera">啟動相機</button>
+      <button id="btnFeed">餵鳥收集線索</button>
+      <button class="btnPrimary" id="btnQuiz" disabled>開始辨認（1/5）</button>
+      <button class="secondary" id="btnHint" disabled>AI 小助手：不爆雷提示</button>
+      <button class="secondary" id="btnReset">重置</button>
+    </div>
+  </div>
+
+  <!-- QUIZ MODAL -->
+  <div class="modal hidden" id="quizModal">
+    <div class="box">
+      <div class="boxHeader">
+        <div class="title" id="quizTitle">辨認鳥類</div>
+        <button class="xbtn" id="closeQuiz">×</button>
+      </div>
+
+      <div class="stepDots" id="stepDots"></div>
+
+      <div class="content">
+        <div class="clueBox" id="clueBox"></div>
+        <div class="grid" id="optionsGrid"></div>
+      </div>
+
+      <div class="footer">
+        <div class="left">
+          <div class="kpi" id="kpiText">答對會拼圖；答錯要重新收集線索。</div>
+        </div>
+        <div class="right">
+          <button class="btnSmall btnWarn" id="btnGiveUp">答錯重來</button>
+          <button class="btnSmall btnPrimary" id="btnNext" disabled>下一步</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVEAL MODAL -->
+  <div class="modal hidden" id="revealModal">
+    <div class="box">
+      <div class="boxHeader">
+        <div class="title">完成！</div>
+        <button class="xbtn" id="closeReveal">×</button>
+      </div>
+      <div class="revealBody">
+        <div class="revealTag" id="revealName">鳥名</div>
+        <div id="revealBird"></div>
+        <div class="summary" id="revealSummary"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <button class="btnPrimary" id="btnReplay">再玩一次</button>
+          <button class="secondary" id="btnCopyLink">複製此鳥 QR 連結</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/** ---------------------------
+ *  0) 參數：同一個網址用 ?bird=xxx 切換鳥
+ * --------------------------- */
+const BIRD_PARAM = new URLSearchParams(location.search).get("bird") || "sparrow";
+
+/** ---------------------------
+ *  1) 全域：部位步驟固定 1–5
+ * --------------------------- */
+const STEPS = [
+  { key:"legs", label:"腳" },
+  { key:"body", label:"身體" },
+  { key:"wing", label:"翅膀" },
+  { key:"tail", label:"尾巴" },
+  { key:"head", label:"頭/記號" },
+];
+
+/** ---------------------------
+ *  2) 選項圖庫（SVG）—可共用
+ * --------------------------- */
+function svgWrap(inner){ return `
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  ${inner}
+</svg>`; }
+
+const OPTION_LIB = {
+  legs: {
+    pink:  { label:"粉紅腳", desc:"偏粉紅、短腿", svg: svgWrap(`<path d="M24 12c3 8 1 14-4 20" stroke="#e17b86" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M40 12c-3 8-1 14 4 20" stroke="#e17b86" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M18 34h10" stroke="#e17b86" stroke-width="4" stroke-linecap="round"/>
+      <path d="M36 34h10" stroke="#e17b86" stroke-width="4" stroke-linecap="round"/>`) },
+    black: { label:"黑色腳", desc:"偏黑、抓枝穩", svg: svgWrap(`<path d="M24 12c3 10 1 16-4 24" stroke="#1d2330" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M40 12c-3 10-1 16 4 24" stroke="#1d2330" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M16 40h14" stroke="#1d2330" stroke-width="4" stroke-linecap="round"/>
+      <path d="M34 40h14" stroke="#1d2330" stroke-width="4" stroke-linecap="round"/>`) },
+    brown: { label:"褐色腳", desc:"偏褐、短而細", svg: svgWrap(`<path d="M24 12c3 9 1 15-4 22" stroke="#6b4a2f" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M40 12c-3 9-1 15 4 22" stroke="#6b4a2f" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M16 38h14" stroke="#6b4a2f" stroke-width="4" stroke-linecap="round"/>
+      <path d="M34 38h14" stroke="#6b4a2f" stroke-width="4" stroke-linecap="round"/>`) },
+    long:  { label:"長腿", desc:"腿明顯較長", svg: svgWrap(`<path d="M24 8c2 14 0 22-4 34" stroke="#303a4a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M40 8c-2 14 0 22 4 34" stroke="#303a4a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M14 44h18" stroke="#303a4a" stroke-width="4" stroke-linecap="round"/>
+      <path d="M32 44h18" stroke="#303a4a" stroke-width="4" stroke-linecap="round"/>`) },
+  },
+  body: {
+    sparrow: { label:"褐色帶紋", desc:"背部有深色條紋感", svg: svgWrap(`
+      <ellipse cx="32" cy="34" rx="20" ry="14" fill="#b07a45"/>
+      <path d="M18 28c6 2 12 2 20 0" stroke="#6a4529" stroke-width="3" opacity=".8"/>
+      <path d="M18 34c6 2 12 2 20 0" stroke="#6a4529" stroke-width="3" opacity=".8"/>
+      <path d="M18 40c6 2 12 2 20 0" stroke="#6a4529" stroke-width="3" opacity=".8"/>`) },
+    bulbul:  { label:"灰褐身體", desc:"灰褐、腹部較淡", svg: svgWrap(`
+      <ellipse cx="32" cy="34" rx="20" ry="14" fill="#9d8f86"/>
+      <ellipse cx="34" cy="38" rx="16" ry="10" fill="#c6bbb4" opacity=".9"/>`) },
+    dove:    { label:"土褐偏粉", desc:"樸素溫和的土褐色", svg: svgWrap(`
+      <ellipse cx="32" cy="34" rx="20" ry="14" fill="#c08e78"/>
+      <ellipse cx="35" cy="38" rx="15" ry="9" fill="#d8b1a1" opacity=".85"/>`) },
+    drongo:  { label:"亮黑身體", desc:"偏黑、略有金屬感", svg: svgWrap(`
+      <ellipse cx="32" cy="34" rx="20" ry="14" fill="#1b1f27"/>
+      <path d="M18 30c6-4 24-4 30 0" stroke="#4a5a78" stroke-width="3" opacity=".35"/>`) },
+    whiteeye:{ label:"綠黃身體", desc:"綠黃、腹部較淡", svg: svgWrap(`
+      <ellipse cx="32" cy="34" rx="20" ry="14" fill="#8dbb3e"/>
+      <ellipse cx="34" cy="38" rx="16" ry="10" fill="#d8e58b" opacity=".9"/>`) },
+  },
+  wing: {
+    roundBar:{ label:"圓翼帶淡翼帶", desc:"短圓、常見淡色翼帶", svg: svgWrap(`
+      <path d="M14 44c10-22 28-28 36-10-4 14-18 24-36 10z" fill="#6a4a2f" opacity=".85"/>
+      <path d="M18 38c10-8 18-9 26-2" stroke="#f3e7c8" stroke-width="4" stroke-linecap="round" opacity=".9"/>`) },
+    shortRound:{ label:"短圓翼", desc:"整體圓鈍、不尖", svg: svgWrap(`
+      <path d="M14 44c10-22 28-28 36-10-4 14-18 24-36 10z" fill="#a87956"/>
+      <path d="M18 38c10-8 18-9 26-2" stroke="#7b5a45" stroke-width="3" stroke-linecap="round" opacity=".7"/>`) },
+    longPoint:{ label:"長尖翼", desc:"較長、翼端尖", svg: svgWrap(`
+      <path d="M12 46c18-30 34-30 40-14-8 18-24 26-40 14z" fill="#1b1f27"/>
+      <path d="M18 40c12-10 22-10 30-2" stroke="#4a5a78" stroke-width="3" stroke-linecap="round" opacity=".45"/>`) },
+    greenSmall:{ label:"小巧綠翼", desc:"偏小、與身體同色系", svg: svgWrap(`
+      <path d="M16 46c10-18 26-22 34-8-6 12-18 18-34 8z" fill="#7aa62f"/>
+      <path d="M20 40c8-6 14-6 20-1" stroke="#d8e58b" stroke-width="3" stroke-linecap="round" opacity=".8"/>`) },
+  },
+  tail: {
+    shortRound:{ label:"短圓尾", desc:"尾短、末端圓", svg: svgWrap(`<path d="M18 40c8-8 20-8 28 0-10 12-18 12-28 0z" fill="#8dbb3e"/>`) },
+    square:   { label:"中長方尾", desc:"末端偏平", svg: svgWrap(`<path d="M18 42h28v10c-10 4-18 4-28 0z" fill="#9d8f86"/>`) },
+    longRound:{ label:"長圓尾", desc:"尾較長、末端圓", svg: svgWrap(`<path d="M20 34c8-10 16-10 24 0v22c-10 6-14 6-24 0z" fill="#c08e78"/>`) },
+    fork:     { label:"深叉尾", desc:"像剪刀，尾端分叉", svg: svgWrap(`
+      <path d="M32 22c-6 10-10 22-10 34 6-6 10-10 10-10s4 4 10 10c0-12-4-24-10-34z" fill="#1b1f27"/>
+      <path d="M32 46l-10 10" stroke="#4a5a78" stroke-width="3" opacity=".35"/>
+      <path d="M32 46l10 10" stroke="#4a5a78" stroke-width="3" opacity=".35"/>`) },
+  },
+  head: {
+    plainBrown:{ label:"素色棕頭", desc:"沒有白眼圈/白頭/項鍊斑", svg: svgWrap(`
+      <circle cx="28" cy="30" r="10" fill="#b07a45"/>
+      <path d="M36 30l14-6-14 0z" fill="#c89c4a"/>`) },
+    whiteHead:{ label:"白頭黑臉", desc:"頭頂偏白、臉側較深", svg: svgWrap(`
+      <circle cx="28" cy="30" r="10" fill="#e9e3d8"/>
+      <path d="M22 26c6 0 12 8 12 12-10 2-14-2-18-8z" fill="#2a2f3a" opacity=".85"/>
+      <path d="M36 30l14-6-14 0z" fill="#c89c4a"/>`) },
+    spottedNeck:{ label:"珠頸斑點", desc:"頸側黑白斑像項鍊", svg: svgWrap(`
+      <circle cx="28" cy="28" r="10" fill="#c08e78"/>
+      <path d="M24 38c6-2 12-2 18 2" stroke="#1b1f27" stroke-width="3" stroke-dasharray="2 4" opacity=".85"/>
+      <path d="M36 28l14-6-14 0z" fill="#c89c4a"/>`) },
+    blackHead:{ label:"全黑頭", desc:"頭部也偏黑", svg: svgWrap(`
+      <circle cx="28" cy="30" r="10" fill="#1b1f27"/>
+      <path d="M36 30l14-6-14 0z" fill="#303a4a"/>`) },
+    whiteEyeRing:{ label:"白色眼圈", desc:"眼周有明顯白圈", svg: svgWrap(`
+      <circle cx="28" cy="30" r="10" fill="#8dbb3e"/>
+      <circle cx="28" cy="30" r="5.5" fill="none" stroke="#ffffff" stroke-width="3"/>
+      <path d="M36 30l14-6-14 0z" fill="#1b1f27"/>`) },
+  }
+};
+
+/** ---------------------------
+ *  3) 五隻鳥題庫（你指定的）
+ *     每一步：prompt（線索敘述）+ options（四選一）+ correct（正確鍵）
+ *     cluePool：餵食隨機掉落線索（每部位 2 句，抽到其中一句）
+ * --------------------------- */
+const BIRDS = {
+  sparrow: {
+    name:"麻雀", sub:"House Sparrow (demo)",
+    summary:"麻雀常見於人類居住環境，身體褐色帶紋，翅短圓，整體小巧。觀察重點：背部條紋、翼帶、尾端形狀。",
+    palette:{ body:"#b07a45", belly:"#e6d3b2", wing:"#6a4529", tail:"#7a5637", head:"#b07a45", legs:"#6b4a2f", beak:"#c89c4a" },
+    cluePool:{
+      legs:["腳短短、偏褐色，走跳很靈活。","腳不粉紅也不特別長，偏褐色。"],
+      body:["身體褐色，背上有深色條紋感。","整體是樸素的褐色調，斑紋明顯。"],
+      wing:["翅膀短圓，常見淡色翼帶。","翼型不尖，帶一條淡色線。"],
+      tail:["尾巴中等長度，末端偏平。","尾端不深叉，較像方尾。"],
+      head:["頭部素色棕，沒有白眼圈或白頭。","頭頸沒有項鍊斑點，整體很樸素。"],
+    },
+    quiz:{
+      legs:{ prompt:"線索一（腳）：腳短短、偏褐色。選最符合的腳型。", options:["pink","brown","black","long"], correct:"brown" },
+      body:{ prompt:"線索二（身體）：褐色帶紋、樸素。選最符合的身體顏色。", options:["sparrow","dove","bulbul","whiteeye"], correct:"sparrow" },
+      wing:{ prompt:"線索三（翅膀）：短圓，常見淡色翼帶。選最符合的翅膀。", options:["roundBar","shortRound","greenSmall","longPoint"], correct:"roundBar" },
+      tail:{ prompt:"線索四（尾巴）：中等長、末端偏平（不是深叉）。選最符合的尾巴。", options:["square","shortRound","fork","longRound"], correct:"square" },
+      head:{ prompt:"線索五（頭/記號）：頭部素色棕，沒有白眼圈、白頭或項鍊斑。選最符合的頭部。", options:["plainBrown","whiteEyeRing","whiteHead","spottedNeck"], correct:"plainBrown" },
+    },
+    hints:{
+      legs:["先看顏色：偏褐不是粉紅。","腿不長，線條短而細。","如果像長腳涉禽那種就排除。"],
+      body:["背上的深色條紋是關鍵。","整體偏褐，不是綠黃也不是全黑。","腹部不會像白頭翁那樣灰淡。"],
+      wing:["找『淡色翼帶』那條線。","翼型偏圓，不尖。","綠繡眼的翅通常更小巧、色更綠。"],
+      tail:["深叉尾（剪刀尾）先排除。","末端偏平、不是圓長尾。","方尾選項通常邊緣很直。"],
+      head:["只要出現白眼圈或白頭就不是麻雀。","項鍊斑點也不是。","選『最樸素』那個。"],
+    }
+  },
+  bulbul: {
+    name:"白頭翁", sub:"Light-vented Bulbul (demo)",
+    summary:"白頭翁頭頂偏白、臉側較深，身體灰褐、腹部較淡。觀察重點：白頭與臉部對比、尾形中長。",
+    palette:{ body:"#9d8f86", belly:"#c6bbb4", wing:"#6b6256", tail:"#6b6256", head:"#e9e3d8", legs:"#1d2330", beak:"#c89c4a" },
+    cluePool:{
+      legs:["腳偏黑，抓枝很穩。","腳色較深，並不粉紅。"],
+      body:["身體灰褐，腹部較淡。","整體灰褐，不是綠黃或亮黑。"],
+      wing:["翅膀深色、邊緣帶淡色。","翼面偏深，線條俐落。"],
+      tail:["尾巴中長，末端偏方。","尾不深叉，長度中等。"],
+      head:["頭頂偏白，臉側較深。","白頭是最醒目的線索。"],
+    },
+    quiz:{
+      legs:{ prompt:"線索一（腳）：腳偏黑。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"線索二（身體）：灰褐、腹部淡。選最符合的身體。", options:["bulbul","sparrow","whiteeye","drongo"], correct:"bulbul" },
+      wing:{ prompt:"線索三（翅膀）：翼面偏深、邊緣淡。選最符合的翅膀。", options:["roundBar","shortRound","longPoint","greenSmall"], correct:"roundBar" },
+      tail:{ prompt:"線索四（尾巴）：中長方尾（不是深叉）。選最符合的尾巴。", options:["square","fork","longRound","shortRound"], correct:"square" },
+      head:{ prompt:"線索五（頭/記號）：白頭、臉側較深。選最符合的頭部。", options:["whiteHead","plainBrown","whiteEyeRing","blackHead"], correct:"whiteHead" },
+    },
+    hints:{
+      legs:["粉紅腳先排除。","深色腳通常比較像黑。","腿不算特別長。"],
+      body:["灰褐＋腹部淡是關鍵。","全黑與綠黃都不是。","背上條紋不像麻雀那麼明顯。"],
+      wing:["找有淡色翼帶/邊緣的那個。","不是很尖長的翼型。","綠繡眼的翅更偏綠。"],
+      tail:["深叉尾（卷尾）先排除。","方尾比圓尾更平直。","尾長度是中等。"],
+      head:["看『白頭』就幾乎定局。","白眼圈（綠繡眼）不是。","項鍊斑點（斑鳩）也不是。"],
+    }
+  },
+  dove: {
+    name:"珠頸斑鳩", sub:"Spotted Dove (demo)",
+    summary:"珠頸斑鳩身體土褐偏粉，腳偏粉紅，頸側有黑白斑點像項鍊。觀察重點：珠頸斑點與長圓尾。",
+    palette:{ body:"#c08e78", belly:"#d8b1a1", wing:"#a87956", tail:"#c08e78", head:"#c08e78", legs:"#e17b86", beak:"#c89c4a" },
+    cluePool:{
+      legs:["腳偏粉紅，不長。","粉紅腳是很明顯的線索。"],
+      body:["身體土褐偏粉，整體樸素。","顏色溫和，不是灰褐也不是亮黑。"],
+      wing:["翅膀同色系，沒有鮮豔色塊。","翼型偏圓，不尖。"],
+      tail:["尾巴較長，末端圓。","尾不深叉，線條柔和。"],
+      head:["頸側有黑白斑點像項鍊。","珠頸斑點是辨識重點。"],
+    },
+    quiz:{
+      legs:{ prompt:"線索一（腳）：粉紅腳。選最符合的腳型。", options:["pink","brown","black","long"], correct:"pink" },
+      body:{ prompt:"線索二（身體）：土褐偏粉、樸素。選最符合的身體。", options:["dove","sparrow","bulbul","whiteeye"], correct:"dove" },
+      wing:{ prompt:"線索三（翅膀）：同色系、偏圓。選最符合的翅膀。", options:["shortRound","roundBar","longPoint","greenSmall"], correct:"shortRound" },
+      tail:{ prompt:"線索四（尾巴）：較長、末端圓。選最符合的尾巴。", options:["longRound","square","fork","shortRound"], correct:"longRound" },
+      head:{ prompt:"線索五（頭/記號）：頸側黑白斑點像項鍊。選最符合的頭部/記號。", options:["spottedNeck","plainBrown","whiteHead","whiteEyeRing"], correct:"spottedNeck" },
+    },
+    hints:{
+      legs:["粉紅腳幾乎是送分線索。","如果看起來偏黑就排除。","腿不長。"],
+      body:["土褐偏粉，不是灰褐或綠黃。","整體很樸素。","不會有麻雀那種條紋感。"],
+      wing:["翼型偏圓，不尖長。","不要選亮黑或偏綠的翅。","同色系、溫和色調。"],
+      tail:["長圓尾 vs 方尾要分清楚。","深叉尾（卷尾）先排除。","末端比較圓柔。"],
+      head:["找『項鍊斑點』。","白頭（白頭翁）不是。","白眼圈（綠繡眼）也不是。"],
+    }
+  },
+  drongo: {
+    name:"大卷尾", sub:"Black Drongo (demo)",
+    summary:"大卷尾全身偏黑帶金屬光澤，尾巴深叉像剪刀。觀察重點：深叉尾與長尖翼。",
+    palette:{ body:"#1b1f27", belly:"#2a3342", wing:"#1b1f27", tail:"#1b1f27", head:"#1b1f27", legs:"#1d2330", beak:"#303a4a" },
+    cluePool:{
+      legs:["腳黑色，站立很靈活。","深色腳、抓枝穩。"],
+      body:["全身偏黑，帶一點金屬光澤。","身體顏色很深，幾乎全黑。"],
+      wing:["翅膀長而尖，飛起來很俐落。","翼型偏尖長。"],
+      tail:["尾巴深叉，像剪刀。","深叉尾是最關鍵的辨識線索。"],
+      head:["頭部也偏黑，沒有白斑。","整體沒有白眼圈或白頭。"],
+    },
+    quiz:{
+      legs:{ prompt:"線索一（腳）：深色腳。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"線索二（身體）：全身偏黑、略金屬感。選最符合的身體。", options:["drongo","bulbul","sparrow","whiteeye"], correct:"drongo" },
+      wing:{ prompt:"線索三（翅膀）：長尖翼。選最符合的翅膀。", options:["longPoint","roundBar","shortRound","greenSmall"], correct:"longPoint" },
+      tail:{ prompt:"線索四（尾巴）：深叉尾像剪刀。選最符合的尾巴。", options:["fork","square","longRound","shortRound"], correct:"fork" },
+      head:{ prompt:"線索五（頭/記號）：頭部也偏黑，沒有白斑。選最符合的頭部/記號。", options:["blackHead","plainBrown","whiteHead","whiteEyeRing"], correct:"blackHead" },
+    },
+    hints:{
+      legs:["粉紅腳先排除。","深色腳通常選黑。","腿不算很長。"],
+      body:["全黑是最大特徵。","灰褐或綠黃都不是。","看起來有一點亮亮的也合理。"],
+      wing:["尖長翼 vs 圓翼要分清楚。","不要選小巧綠翼。","翼端尖會更像。"],
+      tail:["先找深叉尾（像剪刀）。","只要不是深叉，幾乎都錯。","這步通常是關鍵一步。"],
+      head:["白頭與白眼圈都不是。","全黑頭與身體一致。","選最『乾淨的黑』。"],
+    }
+  },
+  whiteeye: {
+    name:"綠繡眼", sub:"Japanese White-eye (demo)",
+    summary:"綠繡眼體色綠黃，最醒目是眼周白色眼圈。觀察重點：白眼圈與綠黃身體、尾短。",
+    palette:{ body:"#8dbb3e", belly:"#d8e58b", wing:"#7aa62f", tail:"#7aa62f", head:"#8dbb3e", legs:"#1d2330", beak:"#1b1f27" },
+    cluePool:{
+      legs:["腳細小偏黑。","深色細腳，不是粉紅。"],
+      body:["身體綠黃，腹部偏淡。","整體偏綠，不是褐或灰。"],
+      wing:["翅膀小巧、與身體同色系。","翼不尖長，色偏綠。"],
+      tail:["尾巴短。","尾端不長，也不深叉。"],
+      head:["眼睛周圍有明顯白色眼圈。","白眼圈是最關鍵的線索。"],
+    },
+    quiz:{
+      legs:{ prompt:"線索一（腳）：深色細腳。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"線索二（身體）：綠黃、腹部淡。選最符合的身體。", options:["whiteeye","bulbul","sparrow","drongo"], correct:"whiteeye" },
+      wing:{ prompt:"線索三（翅膀）：小巧綠翼。選最符合的翅膀。", options:["greenSmall","roundBar","shortRound","longPoint"], correct:"greenSmall" },
+      tail:{ prompt:"線索四（尾巴）：短圓尾。選最符合的尾巴。", options:["shortRound","square","fork","longRound"], correct:"shortRound" },
+      head:{ prompt:"線索五（頭/記號）：白色眼圈。選最符合的頭部/記號。", options:["whiteEyeRing","plainBrown","whiteHead","blackHead"], correct:"whiteEyeRing" },
+    },
+    hints:{
+      legs:["粉紅腳先排除。","深色細腳通常選黑。","腿不長。"],
+      body:["綠黃是最大特徵。","灰褐（白頭翁）不是。","全黑（卷尾）也不是。"],
+      wing:["挑最『小巧偏綠』的翅膀。","不要選尖長翼。","淡翼帶不是重點。"],
+      tail:["尾短，深叉尾先排除。","方尾比短圓尾更直。","這步選最圓、最短。"],
+      head:["只要看到白眼圈就選它。","白頭不是。","項鍊斑點也不是。"],
+    }
+  }
+};
+
+function getBirdByParam(p){
+  if(p === "sparrow" || p === "麻雀") return BIRDS.sparrow;
+  if(p === "bulbul"  || p === "白頭翁") return BIRDS.bulbul;
+  if(p === "dove"    || p === "珠頸斑鳩") return BIRDS.dove;
+  if(p === "drongo"  || p === "大卷尾") return BIRDS.drongo;
+  if(p === "whiteeye"|| p === "綠繡眼") return BIRDS.whiteeye;
+  return BIRDS.sparrow;
+}
+
+const bird = getBirdByParam(BIRD_PARAM);
+
+/** ---------------------------
+ *  4) 狀態
+ * --------------------------- */
+const state = {
+  clues: {},            // { partKey: {text} }
+  solved: {},           // { partKey: true }
+  currentStep: 0,       // 0..4
+  assembledCount: 0,    // 0..5
+  hintLeft: 2,
+  usedHints: {},        // { partKey: [idx...] }
+  cameraOn: false,
+};
+
+const $ = (id)=>document.getElementById(id);
+const elBirdName = $("birdName");
+const elBirdSub = $("birdSub");
+const elClueCount = $("clueCount");
+const elHintLeft = $("hintLeft");
+const elBirdCanvas = $("birdCanvas");
+const elClueChips = $("clueChips");
+const toast = $("toast");
+const btnCamera = $("btnCamera");
+const btnFeed = $("btnFeed");
+const btnQuiz = $("btnQuiz");
+const btnHint = $("btnHint");
+const btnReset = $("btnReset");
+
+const quizModal = $("quizModal");
+const stepDots = $("stepDots");
+const clueBox = $("clueBox");
+const optionsGrid = $("optionsGrid");
+const closeQuiz = $("closeQuiz");
+const btnNext = $("btnNext");
+const btnGiveUp = $("btnGiveUp");
+const quizTitle = $("quizTitle");
+
+const revealModal = $("revealModal");
+const revealName = $("revealName");
+const revealBird = $("revealBird");
+const revealSummary = $("revealSummary");
+const closeReveal = $("closeReveal");
+const btnReplay = $("btnReplay");
+const btnCopyLink = $("btnCopyLink");
+
+/** ---------------------------
+ *  5) 相機（A 方案：只要背景相機 + 2D 疊圖）
+ * --------------------------- */
+async function startCamera(){
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal:"environment" } },
+      audio:false
+    });
+    $("camera").srcObject = stream;
+    state.cameraOn = true;
+    showToast("相機已啟動");
+    btnCamera.textContent = "相機已啟動";
+    btnCamera.disabled = true;
+  }catch(e){
+    console.warn(e);
+    showToast("相機啟動失敗：請用 HTTPS 開啟並允許相機權限");
+  }
+}
+
+/** ---------------------------
+ *  6) UI 渲染
+ * --------------------------- */
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1600);
+}
+
+function renderChips(){
+  elClueChips.innerHTML = "";
+  const keys = STEPS.map(s=>s.key);
+  keys.forEach(k=>{
+    const has = !!state.clues[k];
+    const label = STEPS.find(s=>s.key===k).label;
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    chip.textContent = has ? `✅ ${label}` : `⬚ ${label}`;
+    elClueChips.appendChild(chip);
+  });
+}
+
+function renderCounters(){
+  const count = Object.keys(state.clues).length;
+  elClueCount.textContent = String(count);
+  elHintLeft.textContent = String(state.hintLeft);
+  btnQuiz.disabled = (count < 5);
+  btnHint.disabled = (count < 1 || state.hintLeft <= 0);
+  btnQuiz.textContent = `開始辨認（${Math.min(state.currentStep+1,5)}/5）`;
+}
+
+function renderBird(assembled){
+  // assembled: 0..5
+  // Layers appear in order: legs -> body -> wing -> tail -> head
+  const pal = bird.palette;
+  const showLegs = assembled >= 1;
+  const showBody = assembled >= 2;
+  const showWing = assembled >= 3;
+  const showTail = assembled >= 4;
+  const showHead = assembled >= 5;
+
+  const svg = `
+  <svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="bird">
+    <defs>
+      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="1.2"/>
+      </filter>
+    </defs>
+
+    <!-- shadow -->
+    <ellipse cx="260" cy="210" rx="120" ry="18" fill="rgba(0,0,0,.22)" filter="url(#soft)"/>
+
+    <g class="${assembled===5 ? "bob" : ""}" transform="translate(0,0)">
+      <!-- tail -->
+      ${showTail ? tailShape(pal.tail) : ""}
+
+      <!-- body -->
+      ${showBody ? `
+        <ellipse cx="270" cy="135" rx="120" ry="70" fill="${pal.body}"/>
+        <ellipse cx="290" cy="155" rx="95" ry="52" fill="${pal.belly}" opacity=".92"/>
+      ` : ""}
+
+      <!-- wing -->
+      ${showWing ? `
+        <path d="M210 165c35-78 124-98 165-40-20 70-86 110-165 40z"
+              fill="${pal.wing}" opacity=".95"/>
+        <path d="M230 150c60-40 105-35 130 5"
+              stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round" opacity=".45"/>
+      ` : ""}
+
+      <!-- legs -->
+      ${showLegs ? `
+        <path d="M250 185c8 18 2 30-8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+        <path d="M290 185c-8 18-2 30 8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+        <path d="M222 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+        <path d="M278 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+      ` : ""}
+
+      <!-- head + beak + optional marks -->
+      ${showHead ? headShape(pal) : ""}
+    </g>
+  </svg>`;
+  elBirdCanvas.innerHTML = svg;
+}
+
+function tailShape(color){
+  // 根据不同鸟：卷尾可用叉尾，其余用圆尾/方尾风格（这里用 bird.name 判断简化）
+  const isFork = (bird.name === "大卷尾");
+  const isLong = (bird.name === "珠頸斑鳩");
+  const isShort = (bird.name === "綠繡眼");
+  if(isFork){
+    return `
+      <path d="M156 108c30 26 60 52 82 78-24 4-46-2-66-18 6 22 18 42 36 60-30-8-56-28-76-58-10 30-30 54-58 70 18-24 28-50 32-78-18 18-38 26-60 24 22-24 46-48 70-78z"
+            fill="${color}" opacity=".96"/>`;
+  }
+  if(isLong){
+    return `<path d="M150 120c55-55 88-55 130 0v110c-55 28-75 28-130 0z" fill="${color}" opacity=".96"/>`;
+  }
+  if(isShort){
+    return `<path d="M160 150c40-36 92-36 132 0-48 58-84 58-132 0z" fill="${color}" opacity=".96"/>`;
+  }
+  // default medium tail
+  return `<path d="M160 145h150v65c-54 24-96 24-150 0z" fill="${color}" opacity=".96"/>`;
+}
+
+function headShape(pal){
+  // base head
+  let mark = "";
+  if(bird.name === "綠繡眼"){
+    mark = `<circle cx="360" cy="104" r="18" fill="none" stroke="#ffffff" stroke-width="8" opacity=".95"/>`;
+  }else if(bird.name === "白頭翁"){
+    // white head cap + darker cheek
+    mark = `
+      <ellipse cx="352" cy="96" rx="34" ry="28" fill="#e9e3d8" opacity=".95"/>
+      <path d="M330 94c22 0 40 22 38 40-30 6-46-8-58-26z" fill="rgba(0,0,0,.55)" opacity=".75"/>`;
+  }else if(bird.name === "珠頸斑鳩"){
+    mark = `<path d="M330 132c30-10 60-6 82 10" stroke="rgba(0,0,0,.65)" stroke-width="8" stroke-dasharray="6 10" opacity=".7"/>`;
+  }
+  // beak
+  const beak = `<path d="M392 104l54-20-54 4z" fill="${pal.beak}" opacity=".98"/>`;
+  return `
+    <circle cx="352" cy="104" r="34" fill="${pal.head}" opacity=".98"/>
+    ${mark}
+    ${beak}
+    <circle cx="350" cy="104" r="6" fill="rgba(0,0,0,.7)"/>
+  `;
+}
+
+function resetAll(){
+  state.clues = {};
+  state.solved = {};
+  state.currentStep = 0;
+  state.assembledCount = 0;
+  state.hintLeft = 2;
+  state.usedHints = {};
+  renderBird(0);
+  renderChips();
+  renderCounters();
+  showToast("已重置");
+}
+
+/** ---------------------------
+ *  7) 餵鳥收集線索（每次補一個尚未收集的部位線索）
+ * --------------------------- */
+function feedBird(){
+  const missing = STEPS.map(s=>s.key).filter(k=>!state.clues[k]);
+  if(missing.length === 0){
+    showToast("線索已集滿，可開始辨認");
+    return;
+  }
+  const part = missing[Math.floor(Math.random()*missing.length)];
+  const pool = bird.cluePool[part];
+  const clue = pool[Math.floor(Math.random()*pool.length)];
+  state.clues[part] = { text: clue };
+  renderChips();
+  renderCounters();
+  renderBird(state.assembledCount);
+  showToast(`獲得線索：${STEPS.find(s=>s.key===part).label}`);
+}
+
+/** ---------------------------
+ *  8) Quiz Modal
+ * --------------------------- */
+function openQuiz(){
+  if(Object.keys(state.clues).length < 5){
+    showToast("請先收集滿 5 張線索");
+    return;
+  }
+  quizModal.classList.remove("hidden");
+  quizTitle.textContent = `辨認鳥類：${bird.name}`;
+  buildStepDots();
+  renderStep();
+}
+
+function closeQuizModal(){
+  quizModal.classList.add("hidden");
+}
+
+function buildStepDots(){
+  stepDots.innerHTML = "";
+  STEPS.forEach((s, idx)=>{
+    const d = document.createElement("div");
+    d.className = "dot";
+    d.textContent = String(idx+1);
+    d.title = `${idx+1}. ${s.label}`;
+    d.addEventListener("click", ()=>{
+      // 只允許到目前為止已解鎖的下一題（避免跳題）
+      const maxIdx = Object.keys(state.solved).length; // solved count
+      if(idx <= maxIdx){
+        state.currentStep = idx;
+        renderStep();
+      }else{
+        showToast("請依序作答");
+      }
+    });
+    stepDots.appendChild(d);
+  });
+}
+
+function renderStep(){
+  btnNext.disabled = true;
+  const part = STEPS[state.currentStep].key;
+  // dots style
+  [...stepDots.children].forEach((el, idx)=>{
+    el.classList.remove("active","done");
+    const k = STEPS[idx].key;
+    if(state.solved[k]) el.classList.add("done");
+    if(idx === state.currentStep) el.classList.add("active");
+  });
+
+  const q = bird.quiz[part];
+  const collected = state.clues[part]?.text || "（尚未收集到此部位線索，請先回去餵鳥）";
+  clueBox.innerHTML = `
+    <div style="font-weight:900;font-size:16px;margin-bottom:6px">${q.prompt}</div>
+    <div>你已收集的線索：<strong>${escapeHtml(collected)}</strong></div>
+    <small>規則：答對 → 拼出一個部位；答錯 → 線索重置，需重新收集。</small>
+  `;
+
+  optionsGrid.innerHTML = "";
+  q.options.forEach(optKey=>{
+    const opt = OPTION_LIB[part][optKey];
+    const card = document.createElement("div");
+    card.className = "opt";
+    card.innerHTML = `
+      ${opt.svg}
+      <div>
+        <div class="lbl">${opt.label}</div>
+        <div class="desc">${opt.desc}</div>
+      </div>
+    `;
+    card.addEventListener("click", ()=> chooseOption(part, optKey, card));
+    optionsGrid.appendChild(card);
+  });
+}
+
+function chooseOption(part, optKey, cardEl){
+  // prevent re-answer if already solved
+  if(state.solved[part]) return;
+
+  const correct = bird.quiz[part].correct;
+  // lock UI by removing click handlers quickly
+  [...optionsGrid.children].forEach(el=>{
+    el.style.pointerEvents = "none";
+  });
+
+  if(optKey === correct){
+    cardEl.classList.add("correct");
+    state.solved[part] = true;
+    state.assembledCount = Math.min(5, Object.keys(state.solved).length);
+    renderBird(state.assembledCount);
+    showToast("答對！拼出一個部位");
+    btnNext.disabled = false;
+
+    // auto advance if last
+    if(Object.keys(state.solved).length === 5){
+      setTimeout(()=>{
+        closeQuizModal();
+        openReveal();
+      }, 650);
+    }
+  }else{
+    cardEl.classList.add("wrong");
+    showToast("答錯了：需要重新收集線索");
+    setTimeout(()=>{
+      closeQuizModal();
+      // reset per game rule
+      state.clues = {};
+      state.solved = {};
+      state.currentStep = 0;
+      state.assembledCount = 0;
+      state.hintLeft = 2;
+      state.usedHints = {};
+      renderBird(0);
+      renderChips();
+      renderCounters();
+    }, 850);
+  }
+
+  // unlock pointer events again after a short delay
+  setTimeout(()=>{
+    [...optionsGrid.children].forEach(el=>{
+      if(!state.solved[part]) el.style.pointerEvents = "auto";
+    });
+  }, 900);
+}
+
+function nextStep(){
+  const solvedCount = Object.keys(state.solved).length;
+  // next is the first unsolved step
+  const nextIdx = STEPS.findIndex(s=>!state.solved[s.key]);
+  if(nextIdx >= 0){
+    state.currentStep = nextIdx;
+    // restore pointer events
+    [...optionsGrid.children].forEach(el=>el.style.pointerEvents="auto");
+    renderStep();
+  }else{
+    closeQuizModal();
+    openReveal();
+  }
+}
+
+/** ---------------------------
+ *  9) Reveal
+ * --------------------------- */
+function openReveal(){
+  revealModal.classList.remove("hidden");
+  revealName.textContent = bird.name;
+  revealBird.innerHTML = `<div style="width:min(520px,92vw)">${renderFinalBirdSVG()}</div>`;
+  revealSummary.textContent = bird.summary;
+}
+
+function closeRevealModal(){
+  revealModal.classList.add("hidden");
+}
+
+function renderFinalBirdSVG(){
+  // full assembled + bob animation
+  const pal = bird.palette;
+  return `
+  <svg class="bob" viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg" aria-label="reveal bird">
+    <ellipse cx="260" cy="210" rx="120" ry="18" fill="rgba(0,0,0,.12)"/>
+    ${tailShape(pal.tail)}
+    <ellipse cx="270" cy="135" rx="120" ry="70" fill="${pal.body}"/>
+    <ellipse cx="290" cy="155" rx="95" ry="52" fill="${pal.belly}" opacity=".92"/>
+    <path d="M210 165c35-78 124-98 165-40-20 70-86 110-165 40z"
+          fill="${pal.wing}" opacity=".95"/>
+    <path d="M230 150c60-40 105-35 130 5"
+          stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round" opacity=".45"/>
+    <path d="M250 185c8 18 2 30-8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+    <path d="M290 185c-8 18-2 30 8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+    <path d="M222 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+    <path d="M278 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+    ${headShape(pal)}
+  </svg>`;
+}
+
+/** ---------------------------
+ * 10) 「AI 小助手」—受控提示庫（不偏題、不亂答）
+ *     Demo 版先用「提示庫 + 規則」：正式版要換成 LLM 也很容易
+ * --------------------------- */
+function aiHint(){
+  if(state.hintLeft <= 0){ showToast("提示已用完"); return; }
+  const unlockedIdx = Math.max(0, STEPS.findIndex(s=>!state.solved[s.key]));
+  const part = STEPS[Math.max(0, unlockedIdx)].key;
+
+  const pool = bird.hints[part] || ["先回到線索句，找最具辨識度的詞。"];
+  const used = state.usedHints[part] || [];
+  let pick = 0;
+  for(let i=0;i<pool.length;i++){
+    if(!used.includes(i)){ pick = i; break; }
+  }
+  used.push(pick);
+  state.usedHints[part] = used;
+  state.hintLeft -= 1;
+  renderCounters();
+
+  showToast(`提示：${pool[pick]}`);
+}
+
+/** ---------------------------
+ * 11) 小工具
+ * --------------------------- */
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+
+function copyLink(){
+  const url = location.origin + location.pathname + `?bird=${encodeURIComponent(BIRD_PARAM)}`;
+  navigator.clipboard?.writeText(url).then(()=>{
+    showToast("已複製連結");
+  }).catch(()=>{
+    showToast("複製失敗：請手動複製網址列");
+  });
+}
+
+/** ---------------------------
+ * 12) 綁定事件 + 初始化
+ * --------------------------- */
+function init(){
+  elBirdName.textContent = bird.name;
+  elBirdSub.textContent = bird.sub;
+
+  renderBird(0);
+  renderChips();
+  renderCounters();
+
+  btnCamera.addEventListener("click", startCamera);
+  btnFeed.addEventListener("click", ()=> {
+    if(!state.cameraOn){
+      // 允許不開相機也能 demo（但會提示）
+      showToast("提示：建議先啟動相機（HTTPS + 允許權限）");
+    }
+    feedBird();
+  });
+  btnQuiz.addEventListener("click", ()=>{
+    // quiz starts from first unsolved step
+    state.currentStep = STEPS.findIndex(s=>!state.solved[s.key]);
+    if(state.currentStep < 0) state.currentStep = 0;
+    openQuiz();
+  });
+  btnHint.addEventListener("click", aiHint);
+  btnReset.addEventListener("click", resetAll);
+
+  closeQuiz.addEventListener("click", closeQuizModal);
+  btnNext.addEventListener("click", nextStep);
+  btnGiveUp.addEventListener("click", ()=>{
+    showToast("重置並重新收集線索");
+    closeQuizModal();
+    resetAll();
+  });
+
+  closeReveal.addEventListener("click", closeRevealModal);
+  btnReplay.addEventListener("click", ()=>{
+    closeRevealModal();
+    resetAll();
+  });
+  btnCopyLink.addEventListener("click", copyLink);
+
+  // 首次提示
+  showToast(`已載入：${bird.name}（按「啟動相機」後再餵鳥）`);
+}
+
+init();
+</script>
+</body>
+</html>
