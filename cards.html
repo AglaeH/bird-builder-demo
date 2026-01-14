@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>線索卡列印（Bird Builder Demo）</title>
+  <style>
+    body{ font-family: system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 16px; color:#111; }
+    .toolbar{ position: sticky; top: 0; background: #fff; padding: 10px 0; border-bottom: 1px solid #eee; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+    button, select{ padding: 10px 12px; border-radius: 12px; border:1px solid #ddd; background:#fff; }
+    .grid{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px;}
+    .card{ border:1px solid #ddd; border-radius: 16px; overflow:hidden; }
+    .front, .back{ padding: 12px; min-height: 220px; }
+    .front{ background: #f7f2e6; }
+    .back{ background: #fff; border-top: 1px dashed #ddd; }
+    .title{ font-weight: 900; margin-bottom: 8px; }
+    .part{ color:#444; font-weight: 750; margin-bottom: 6px; }
+    .clue{ color:#333; line-height:1.35; }
+    .qrBox{ display:flex; gap:12px; align-items:center; }
+    .qr{ width: 140px; height: 140px; }
+    .token{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; color:#555; word-break: break-all; }
+    @media print{
+      .toolbar{ display:none; }
+      body{ margin: 0; }
+      .grid{ gap: 0; }
+      .card{ border-radius: 0; border: 1px solid #bbb; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <select id="birdFilter">
+      <option value="all">全部鳥（25 張）</option>
+      <option value="sparrow">麻雀</option>
+      <option value="bulbul">白頭翁</option>
+      <option value="dove">珠頸斑鳩</option>
+      <option value="drongo">大卷尾</option>
+      <option value="whiteeye">綠繡眼</option>
+    </select>
+    <button id="btnPrint">列印</button>
+    <span style="color:#666;font-size:13px;">每張卡：正面（平面線索）/ 背面（QR）。掃描時 QR 內容需與系統 token 相同。</span>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="./data.js"></script>
+  <script>
+    const grid = document.getElementById("grid");
+    const birdFilter = document.getElementById("birdFilter");
+    const btnPrint = document.getElementById("btnPrint");
+
+    function partLabel(p){ return PART_LABEL[p] || p; }
+
+    function render(){
+      const filter = birdFilter.value;
+      grid.innerHTML = "";
+
+      const keys = Object.keys(BIRDS).filter(k => filter === "all" ? true : k === filter);
+
+      for(const key of keys){
+        const b = BIRDS[key];
+        for(const part of PART_ORDER){
+          const token = b.parts[part].token;
+          const clue = b.parts[part].clue;
+
+          const wrap = document.createElement("div");
+          wrap.className = "card";
+          wrap.innerHTML = \`
+            <div class="front">
+              <div class="title">\${b.name}</div>
+              <div class="part">線索卡：\${partLabel(part)}</div>
+              <div class="clue">\${clue}</div>
+              <div style="margin-top:10px;color:#666;font-size:12px;">（建議：自行加入該部位的平面插畫/照片，以強化觀察。）</div>
+            </div>
+            <div class="back">
+              <div class="qrBox">
+                <div class="qr" id="qr-\${key}-\${part}"></div>
+                <div class="token">
+                  <div style="font-weight:800;margin-bottom:6px;">QR 內容（token）</div>
+                  \${token}
+                </div>
+              </div>
+            </div>
+          \`;
+          grid.appendChild(wrap);
+
+          const el = wrap.querySelector("#qr-" + key + "-" + part);
+          new QRCode(el, { text: token, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });
+        }
+      }
+    }
+
+    birdFilter.addEventListener("change", render);
+    btnPrint.addEventListener("click", () => window.print());
+
+    render();
+  </script>
+</body>
+</html>
