@@ -82,18 +82,25 @@
       box-shadow: 0 10px 18px rgba(0,0,0,.25);
       cursor:pointer;
     }
-    button.secondary{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.18);backdrop-filter: blur(8px);}
+    button.dark{
+      background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(8px);
+    }
     button:disabled{opacity:.45;cursor:not-allowed;}
+
     .toast{
       pointer-events:none;
       position:absolute;left:50%;transform:translateX(-50%);
-      bottom:110px;
-      background:rgba(0,0,0,.65);color:#fff;
+      bottom:118px;
+      background:rgba(0,0,0,.70);color:#fff;
       padding:10px 14px;border-radius:999px;
       border:1px solid rgba(255,255,255,.14);
       backdrop-filter: blur(8px);
       font-size:14px;
       opacity:0;transition:opacity .2s;
+      max-width:min(92vw,640px);
+      text-align:center;
+      line-height:1.3;
     }
     .toast.show{opacity:1;}
 
@@ -107,7 +114,7 @@
     }
     .hidden{display:none;}
     .box{
-      width:min(760px,96vw);
+      width:min(780px,96vw);
       background:var(--panel);
       color:var(--ink);
       border-radius:22px;
@@ -137,17 +144,14 @@
       background:rgba(0,0,0,.06);
       border:1px solid rgba(0,0,0,.10);
       font-weight:900;
-      cursor:pointer;
       user-select:none;
     }
     .dot.active{background:var(--accent);border-color:rgba(0,0,0,.14);}
     .dot.done{background:rgba(46,125,50,.18);border-color:rgba(46,125,50,.25);color:var(--good);}
-    .content{
-      padding:12px 14px 14px 14px;
-      display:flex;flex-direction:column;gap:10px;
-    }
+
+    .content{padding:12px 14px 14px 14px;display:flex;flex-direction:column;gap:10px;}
     .clueBox{
-      background:rgba(255,255,255,.65);
+      background:rgba(255,255,255,.72);
       border:1px solid rgba(0,0,0,.08);
       border-radius:16px;
       padding:12px;
@@ -171,6 +175,7 @@
     .opt .desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.25;}
     .opt.correct{border-color:rgba(46,125,50,.55);background:rgba(46,125,50,.08);}
     .opt.wrong{border-color:rgba(198,40,40,.55);background:rgba(198,40,40,.08);}
+
     .footer{
       padding:12px 14px 14px 14px;
       display:flex;gap:10px;justify-content:space-between;align-items:center;
@@ -179,13 +184,15 @@
       flex-wrap:wrap;
     }
     .footer .left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    .kpi{font-size:13px;color:var(--muted);}
     .footer .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .kpi{font-size:13px;color:var(--muted);}
+
     .btnSmall{padding:10px 12px;border-radius:14px;font-size:14px;}
     .btnPrimary{background:#1b1b1b;color:#fff;}
+    .btnGhost{background:#fff;color:#111;border:1px solid rgba(0,0,0,.12);box-shadow:none;}
     .btnWarn{background:#9c1d1d;color:#fff;}
 
-    /* Reveal */
+    /* Reveal / Assemble */
     .revealBody{padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;}
     .revealTag{
       display:inline-flex;align-items:center;gap:8px;
@@ -199,13 +206,74 @@
       background:#fff;border:1px solid rgba(0,0,0,.10);
       border-radius:18px;padding:12px;line-height:1.4;
     }
-    .bob{
-      animation:bob 1.8s ease-in-out infinite;
-      transform-origin:center;
+    .bob{animation:bob 1.8s ease-in-out infinite;transform-origin:center;}
+    @keyframes bob{0%,100%{transform:translateY(0px);}50%{transform:translateY(-6px);}}
+
+    /* Scan preview */
+    .scanWrap{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
-    @keyframes bob{
-      0%,100%{transform:translateY(0px);}
-      50%{transform:translateY(-6px);}
+    .scanPreviewBox{
+      width:100%;
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.10);
+      background:#111;
+      position:relative;
+    }
+    canvas#scanPreview{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+    .scanBadge{
+      position:absolute;
+      left:12px;top:12px;
+      background:rgba(0,0,0,.55);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Feed animation */
+    #feedAnim{
+      position:absolute;
+      left:50%;
+      bottom:110px;
+      transform:translateX(-50%);
+      z-index:20;
+      pointer-events:none;
+      opacity:0;
+      font-size:28px;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.35));
+    }
+    #feedAnim.show{
+      animation:feed 900ms ease-out 1;
+      opacity:1;
+    }
+    @keyframes feed{
+      0%{transform:translateX(-50%) translateY(18px) scale(.9);opacity:0;}
+      25%{opacity:1;}
+      70%{transform:translateX(-50%) translateY(-32px) scale(1.05);opacity:1;}
+      100%{transform:translateX(-50%) translateY(-48px) scale(1.02);opacity:0;}
+    }
+
+    /* AI hint modal typing */
+    .aiBox{
+      background:#fff;
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:18px;
+      padding:12px;
+      line-height:1.45;
+      width:100%;
+      min-height:120px;
+      white-space:pre-wrap;
     }
   </style>
 </head>
@@ -222,7 +290,7 @@
         <span style="opacity:.6">|</span>
         待掃 <strong id="pendingText">—</strong>
         <span style="opacity:.6">|</span>
-        提示 <strong id="hintLeft">2</strong>/2
+        AI 提示 <strong id="hintLeft">2</strong>/2
       </div>
     </div>
 
@@ -230,20 +298,22 @@
       <div class="birdCard">
         <div class="birdCanvas" id="birdCanvas"></div>
         <div class="hintRow" id="clueChips"></div>
-        <div style="font-size:12px;opacity:.9;text-align:center;line-height:1.35">
-          流程：按<strong>餵鳥</strong> → 系統指定「要掃哪張線索卡」→ 按<strong>掃描線索卡</strong>（或餵鳥後自動開掃描）→ 掃對才獲得線索。<br/>
-          集滿 5 張線索 → <strong>開始辨認（1–5）</strong>；答對會<strong>慢慢拼出部位</strong>。
+        <div style="font-size:12px;opacity:.92;text-align:center;line-height:1.35">
+          流程：<strong>餵鳥</strong> → 系統指定要掃哪張線索卡 → <strong>掃描線索卡</strong>（會顯示掃描畫面）→ 集滿 5 張線索 → <strong>開始辨認（1–5）</strong><br/>
+          答對一題：會先看到<strong>拼裝結果</strong>，再按「下一步」進入下一題。
         </div>
       </div>
+
       <div class="toast" id="toast"></div>
+      <div id="feedAnim">🍞✨</div>
     </div>
 
     <div class="bottom">
-      <button class="secondary" id="btnCamera">啟動相機</button>
+      <button class="dark" id="btnCamera">啟動相機</button>
       <button id="btnFeed">餵鳥（掉落線索）</button>
-      <button class="secondary" id="btnScan" disabled>掃描線索卡</button>
+      <button class="dark" id="btnScan" disabled>掃描線索卡</button>
       <button class="btnPrimary" id="btnQuiz" disabled>開始辨認（1/5）</button>
-      <button class="secondary" id="btnReset">重置本鳥</button>
+      <button class="dark" id="btnReset">重置本鳥</button>
     </div>
   </div>
 
@@ -264,12 +334,45 @@
 
       <div class="footer">
         <div class="left">
-          <div class="kpi" id="kpiText">提示只在答題時可用；不爆雷，只引導觀察重點。</div>
-          <button class="btnSmall secondary" id="btnHintQuiz">提示（不爆雷）</button>
+          <div class="kpi" id="kpiText">AI 提示：不爆雷，只把線索拆成可觀察的重點。</div>
+          <button class="btnSmall btnGhost" id="btnHintQuiz">AI 提示</button>
         </div>
         <div class="right">
-          <button class="btnSmall btnWarn" id="btnGiveUp">答錯重來</button>
-          <button class="btnSmall btnPrimary" id="btnNext" disabled>下一步</button>
+          <button class="btnSmall btnGhost" id="btnCloseQuiz2">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI HINT MODAL -->
+  <div class="modal hidden" id="aiModal">
+    <div class="box" style="max-width:700px;">
+      <div class="boxHeader">
+        <div class="title">AI 助教提示</div>
+        <button class="xbtn" id="closeAi">×</button>
+      </div>
+      <div class="content">
+        <div class="aiBox" id="aiText"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btnSmall btnGhost" id="aiOk">知道了</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSEMBLE MODAL -->
+  <div class="modal hidden" id="assembleModal">
+    <div class="box">
+      <div class="boxHeader">
+        <div class="title" id="assembleTitle">已拼上部位</div>
+        <button class="xbtn" id="closeAssemble">×</button>
+      </div>
+      <div class="revealBody">
+        <div class="revealTag" id="assembleTag">—</div>
+        <div id="assembleBird"></div>
+        <div class="summary" id="assembleSummary"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <button class="btnPrimary" id="btnAssembleNext">下一步</button>
         </div>
       </div>
     </div>
@@ -288,7 +391,7 @@
         <div class="summary" id="revealSummary"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
           <button class="btnPrimary" id="btnReplay">再玩一次</button>
-          <button class="secondary" id="btnCopyLink">複製此鳥連結</button>
+          <button class="btnGhost" id="btnCopyLink">複製此鳥連結</button>
         </div>
       </div>
     </div>
@@ -313,18 +416,29 @@
 
   <!-- SCAN CLUE CARD OVERLAY -->
   <div class="modal hidden" id="scanOverlay">
-    <div class="box" style="max-width:560px;">
+    <div class="box" style="max-width:720px;">
       <div class="boxHeader">
         <div class="title">掃描線索卡</div>
         <button class="xbtn" id="btnStopScan">×</button>
       </div>
       <div class="content">
-        <div class="clueBox" id="scanHintText">請把線索卡背面的 QR 對準鏡頭。</div>
-        <div style="font-size:13px;color:var(--muted);line-height:1.45">
-          目前需要掃描：<strong id="scanNeedText">—</strong><br/>
-          建議：QR 佔畫面 1/4 以上、保持穩定 1 秒、避免反光。
+        <div class="scanWrap">
+          <div class="scanPreviewBox">
+            <div class="scanBadge" id="scanBadge">掃描中…</div>
+            <canvas id="scanPreview" width="960" height="540"></canvas>
+          </div>
+
+          <div class="clueBox" id="scanHintText"></div>
+
+          <div style="font-size:13px;color:var(--muted);line-height:1.45">
+            目前需要掃描：<strong id="scanNeedText">—</strong><br/>
+            建議：QR 佔畫面 1/4 以上、保持穩定 1 秒、避免反光。
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+            <button class="btnSmall btnGhost" id="btnStopScan2">取消掃描</button>
+          </div>
         </div>
-        <button class="btnSmall secondary" id="btnStopScan2">取消掃描</button>
       </div>
     </div>
   </div>
@@ -336,12 +450,13 @@
  *  0) Query params / storage
  * =========================== */
 const qs = new URLSearchParams(location.search);
-const CLAIM = qs.get("claim");                 // legs/body/wing/tail/head (fallback: if you open by external scanner)
-const START = qs.get("start") === "1";         // start=1 => reset this bird
+const CLAIM = qs.get("claim");                 // fallback: if external scanner opens link
+const START = qs.get("start") === "1";
 const BIRD_PARAM = qs.get("bird") || localStorage.getItem("bbdemo:lastBird") || "sparrow";
 localStorage.setItem("bbdemo:lastBird", BIRD_PARAM);
 
 const STORAGE_KEY = (birdKey)=>`bbdemo:state:${birdKey}`;
+const deepClone = (o)=>JSON.parse(JSON.stringify(o));
 
 /** ===========================
  *  1) Steps fixed 1–5
@@ -401,7 +516,7 @@ const OPTION_LIB = {
       <ellipse cx="34" cy="38" rx="16" ry="10" fill="#d8e58b" opacity=".9"/>`) },
   },
   wing: {
-    roundBar:{ label:"圓翼帶淡翼帶", desc:"短圓、常見淡色翼帶", svg: svgWrap(`
+    roundBar:{ label:"圓翼＋淡翼帶", desc:"短圓、常見淡色翼帶", svg: svgWrap(`
       <path d="M14 44c10-22 28-28 36-10-4 14-18 24-36 10z" fill="#6a4a2f" opacity=".85"/>
       <path d="M18 38c10-8 18-9 26-2" stroke="#f3e7c8" stroke-width="4" stroke-linecap="round" opacity=".9"/>`) },
     shortRound:{ label:"短圓翼", desc:"整體圓鈍、不尖", svg: svgWrap(`
@@ -461,18 +576,18 @@ const BIRDS = {
       head:["頭部素色棕，沒有白眼圈或白頭。","頭頸沒有項鍊斑點，整體很樸素。"],
     },
     quiz:{
-      legs:{ prompt:"步驟 1（腳）：腳短短、偏褐色。選最符合的腳型。", options:["pink","brown","black","long"], correct:"brown" },
-      body:{ prompt:"步驟 2（身體）：褐色帶紋。選最符合的身體顏色。", options:["sparrow","dove","bulbul","whiteeye"], correct:"sparrow" },
-      wing:{ prompt:"步驟 3（翅膀）：短圓＋淡色翼帶。選最符合的翅膀。", options:["roundBar","shortRound","greenSmall","longPoint"], correct:"roundBar" },
-      tail:{ prompt:"步驟 4（尾巴）：末端偏平（不是深叉）。選最符合的尾巴。", options:["square","shortRound","fork","longRound"], correct:"square" },
-      head:{ prompt:"步驟 5（頭/記號）：頭部素色棕（非白眼圈/白頭/項鍊斑）。選最符合的頭部。", options:["plainBrown","whiteEyeRing","whiteHead","spottedNeck"], correct:"plainBrown" },
+      legs:{ prompt:"步驟 1（腳）：選最符合敘述的腳型。", options:["pink","brown","black","long"], correct:"brown" },
+      body:{ prompt:"步驟 2（身體）：選最符合敘述的身體。", options:["sparrow","dove","bulbul","whiteeye"], correct:"sparrow" },
+      wing:{ prompt:"步驟 3（翅膀）：選最符合敘述的翅膀。", options:["roundBar","shortRound","greenSmall","longPoint"], correct:"roundBar" },
+      tail:{ prompt:"步驟 4（尾巴）：選最符合敘述的尾巴。", options:["square","shortRound","fork","longRound"], correct:"square" },
+      head:{ prompt:"步驟 5（頭/記號）：選最符合敘述的頭部/記號。", options:["plainBrown","whiteEyeRing","whiteHead","spottedNeck"], correct:"plainBrown" },
     },
-    hints:{
-      legs:["先看顏色：偏褐不是粉紅。","腿不長，線條短而細。"],
-      body:["背上的深色條紋是關鍵。","整體偏褐，不是綠黃也不是全黑。"],
-      wing:["找『淡色翼帶』那條線。","翼型偏圓，不尖。"],
-      tail:["深叉尾（剪刀尾）先排除。","末端偏平、較像方尾。"],
-      head:["只要出現白眼圈或白頭就不是麻雀。","選『最樸素』那個。"],
+    ai:{
+      legs:["先看顏色：偏褐不是粉紅。","再看比例：腿不長，線條短而細。"],
+      body:["先抓『褐色』主色，再找『深色條紋感』。","如果看起來偏綠或偏灰，就先排除。"],
+      wing:["先看翼型：短圓不是尖長。","再找『淡色翼帶』那條線。"],
+      tail:["先排除深叉尾（像剪刀）。","末端偏平、較像方尾。"],
+      head:["先排除白眼圈、白頭、項鍊斑。","選最『樸素的棕頭』。"],
     }
   },
   bulbul: {
@@ -487,18 +602,18 @@ const BIRDS = {
       head:["頭頂偏白，臉側較深。","白頭是最醒目的線索。"],
     },
     quiz:{
-      legs:{ prompt:"步驟 1（腳）：腳偏黑。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
-      body:{ prompt:"步驟 2（身體）：灰褐＋腹部淡。選最符合的身體。", options:["bulbul","sparrow","whiteeye","drongo"], correct:"bulbul" },
-      wing:{ prompt:"步驟 3（翅膀）：翼面偏深。選最符合的翅膀。", options:["roundBar","shortRound","longPoint","greenSmall"], correct:"roundBar" },
-      tail:{ prompt:"步驟 4（尾巴）：中長方尾（非深叉）。選最符合的尾巴。", options:["square","fork","longRound","shortRound"], correct:"square" },
-      head:{ prompt:"步驟 5（頭/記號）：白頭、臉側較深。選最符合的頭部。", options:["whiteHead","plainBrown","whiteEyeRing","blackHead"], correct:"whiteHead" },
+      legs:{ prompt:"步驟 1（腳）：選最符合敘述的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"步驟 2（身體）：選最符合敘述的身體。", options:["bulbul","sparrow","whiteeye","drongo"], correct:"bulbul" },
+      wing:{ prompt:"步驟 3（翅膀）：選最符合敘述的翅膀。", options:["roundBar","shortRound","longPoint","greenSmall"], correct:"roundBar" },
+      tail:{ prompt:"步驟 4（尾巴）：選最符合敘述的尾巴。", options:["square","fork","longRound","shortRound"], correct:"square" },
+      head:{ prompt:"步驟 5（頭/記號）：選最符合敘述的頭部/記號。", options:["whiteHead","plainBrown","whiteEyeRing","blackHead"], correct:"whiteHead" },
     },
-    hints:{
-      legs:["粉紅腳先排除。","深色腳通常比較像黑。"],
-      body:["灰褐＋腹部淡是關鍵。","全黑與綠黃都不是。"],
-      wing:["找有淡色翼帶/邊緣的那個。","不是很尖長的翼型。"],
-      tail:["深叉尾（卷尾）先排除。","方尾比圓尾更平直。"],
-      head:["看『白頭』就幾乎定局。","白眼圈不是。"],
+    ai:{
+      legs:["先排除粉紅腳。","深色腳通常偏黑。"],
+      body:["抓『灰褐』主色＋『腹部較淡』。","全黑與綠黃先排除。"],
+      wing:["翼面偏深、帶淡色邊緣。","不是尖長翼型。"],
+      tail:["深叉尾先排除。","末端偏平，像方尾。"],
+      head:["找『白頭』＋臉側較深。","白眼圈不是白頭。"],
     }
   },
   dove: {
@@ -513,18 +628,18 @@ const BIRDS = {
       head:["頸側有黑白斑點像項鍊。","珠頸斑點是辨識重點。"],
     },
     quiz:{
-      legs:{ prompt:"步驟 1（腳）：粉紅腳。選最符合的腳型。", options:["pink","brown","black","long"], correct:"pink" },
-      body:{ prompt:"步驟 2（身體）：土褐偏粉。選最符合的身體。", options:["dove","sparrow","bulbul","whiteeye"], correct:"dove" },
-      wing:{ prompt:"步驟 3（翅膀）：同色系、偏圓。選最符合的翅膀。", options:["shortRound","roundBar","longPoint","greenSmall"], correct:"shortRound" },
-      tail:{ prompt:"步驟 4（尾巴）：較長、末端圓。選最符合的尾巴。", options:["longRound","square","fork","shortRound"], correct:"longRound" },
-      head:{ prompt:"步驟 5（頭/記號）：頸側黑白斑點像項鍊。選最符合的記號。", options:["spottedNeck","plainBrown","whiteHead","whiteEyeRing"], correct:"spottedNeck" },
+      legs:{ prompt:"步驟 1（腳）：選最符合敘述的腳型。", options:["pink","brown","black","long"], correct:"pink" },
+      body:{ prompt:"步驟 2（身體）：選最符合敘述的身體。", options:["dove","sparrow","bulbul","whiteeye"], correct:"dove" },
+      wing:{ prompt:"步驟 3（翅膀）：選最符合敘述的翅膀。", options:["shortRound","roundBar","longPoint","greenSmall"], correct:"shortRound" },
+      tail:{ prompt:"步驟 4（尾巴）：選最符合敘述的尾巴。", options:["longRound","square","fork","shortRound"], correct:"longRound" },
+      head:{ prompt:"步驟 5（頭/記號）：選最符合敘述的頭部/記號。", options:["spottedNeck","plainBrown","whiteHead","whiteEyeRing"], correct:"spottedNeck" },
     },
-    hints:{
-      legs:["粉紅腳幾乎是送分線索。","如果看起來偏黑就排除。"],
-      body:["土褐偏粉，不是灰褐或綠黃。","整體很樸素。"],
-      wing:["翼型偏圓，不尖長。","不要選偏綠的小巧翼。"],
-      tail:["長圓尾 vs 方尾要分清楚。","深叉尾先排除。"],
-      head:["找『項鍊斑點』。","白頭/白眼圈都不是。"],
+    ai:{
+      legs:["粉紅腳很關鍵，先看顏色。","如果像黑色或褐色，就排除。"],
+      body:["土褐偏粉，色調溫和。","不是灰褐也不是綠黃。"],
+      wing:["翼型偏圓，不尖長。","同色系、不鮮豔。"],
+      tail:["尾較長、末端圓。","深叉尾先排除。"],
+      head:["找『頸側黑白斑點』像項鍊。","白頭/白眼圈都不是。"],
     }
   },
   drongo: {
@@ -539,18 +654,18 @@ const BIRDS = {
       head:["頭部也偏黑，沒有白斑。","整體沒有白眼圈或白頭。"],
     },
     quiz:{
-      legs:{ prompt:"步驟 1（腳）：深色腳。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
-      body:{ prompt:"步驟 2（身體）：全身偏黑。選最符合的身體。", options:["drongo","bulbul","sparrow","whiteeye"], correct:"drongo" },
-      wing:{ prompt:"步驟 3（翅膀）：長尖翼。選最符合的翅膀。", options:["longPoint","roundBar","shortRound","greenSmall"], correct:"longPoint" },
-      tail:{ prompt:"步驟 4（尾巴）：深叉尾像剪刀。選最符合的尾巴。", options:["fork","square","longRound","shortRound"], correct:"fork" },
-      head:{ prompt:"步驟 5（頭/記號）：頭部也偏黑。選最符合的頭部。", options:["blackHead","plainBrown","whiteHead","whiteEyeRing"], correct:"blackHead" },
+      legs:{ prompt:"步驟 1（腳）：選最符合敘述的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"步驟 2（身體）：選最符合敘述的身體。", options:["drongo","bulbul","sparrow","whiteeye"], correct:"drongo" },
+      wing:{ prompt:"步驟 3（翅膀）：選最符合敘述的翅膀。", options:["longPoint","roundBar","shortRound","greenSmall"], correct:"longPoint" },
+      tail:{ prompt:"步驟 4（尾巴）：選最符合敘述的尾巴。", options:["fork","square","longRound","shortRound"], correct:"fork" },
+      head:{ prompt:"步驟 5（頭/記號）：選最符合敘述的頭部/記號。", options:["blackHead","plainBrown","whiteHead","whiteEyeRing"], correct:"blackHead" },
     },
-    hints:{
+    ai:{
       legs:["粉紅腳先排除。","深色腳通常選黑。"],
-      body:["全黑是最大特徵。","灰褐或綠黃都不是。"],
-      wing:["尖長翼 vs 圓翼要分清楚。","不要選小巧綠翼。"],
-      tail:["先找深叉尾（像剪刀）。","只要不是深叉，幾乎都錯。"],
-      head:["白頭與白眼圈都不是。","選最『乾淨的黑』。"],
+      body:["先抓『全黑』，不要被背景影響。","灰褐/綠黃先排除。"],
+      wing:["尖長翼 vs 圓翼要分清楚。","翼端明顯較尖。"],
+      tail:["先找深叉尾（剪刀尾）。","只要不是深叉，幾乎都錯。"],
+      head:["白頭/白眼圈都不是。","選最乾淨的黑頭。"],
     }
   },
   whiteeye: {
@@ -565,25 +680,23 @@ const BIRDS = {
       head:["眼睛周圍有明顯白色眼圈。","白眼圈是最關鍵的線索。"],
     },
     quiz:{
-      legs:{ prompt:"步驟 1（腳）：深色細腳。選最符合的腳型。", options:["black","brown","pink","long"], correct:"black" },
-      body:{ prompt:"步驟 2（身體）：綠黃＋腹部淡。選最符合的身體。", options:["whiteeye","bulbul","sparrow","drongo"], correct:"whiteeye" },
-      wing:{ prompt:"步驟 3（翅膀）：小巧綠翼。選最符合的翅膀。", options:["greenSmall","roundBar","shortRound","longPoint"], correct:"greenSmall" },
-      tail:{ prompt:"步驟 4（尾巴）：尾短。選最符合的尾巴。", options:["shortRound","square","fork","longRound"], correct:"shortRound" },
-      head:{ prompt:"步驟 5（頭/記號）：白色眼圈。選最符合的頭部/記號。", options:["whiteEyeRing","plainBrown","whiteHead","blackHead"], correct:"whiteEyeRing" },
+      legs:{ prompt:"步驟 1（腳）：選最符合敘述的腳型。", options:["black","brown","pink","long"], correct:"black" },
+      body:{ prompt:"步驟 2（身體）：選最符合敘述的身體。", options:["whiteeye","bulbul","sparrow","drongo"], correct:"whiteeye" },
+      wing:{ prompt:"步驟 3（翅膀）：選最符合敘述的翅膀。", options:["greenSmall","roundBar","shortRound","longPoint"], correct:"greenSmall" },
+      tail:{ prompt:"步驟 4（尾巴）：選最符合敘述的尾巴。", options:["shortRound","square","fork","longRound"], correct:"shortRound" },
+      head:{ prompt:"步驟 5（頭/記號）：選最符合敘述的頭部/記號。", options:["whiteEyeRing","plainBrown","whiteHead","blackHead"], correct:"whiteEyeRing" },
     },
-    hints:{
-      legs:["粉紅腳先排除。","深色細腳通常選黑。"],
+    ai:{
+      legs:["粉紅腳先排除。","深色細腳通常偏黑。"],
       body:["綠黃是最大特徵。","灰褐與全黑都不是。"],
-      wing:["挑最『小巧偏綠』的翅膀。","不要選尖長翼。"],
+      wing:["挑最小巧、偏綠的翅膀。","不要選尖長翼。"],
       tail:["尾短，深叉尾先排除。","方尾比短圓尾更直。"],
-      head:["只要看到白眼圈就選它。","白頭不是。"],
+      head:["看到白眼圈就選它。","白頭不是白眼圈。"],
     }
   }
 };
 
-function getBirdByKey(key){
-  return BIRDS[key] || BIRDS.sparrow;
-}
+function getBirdByKey(key){ return BIRDS[key] || BIRDS.sparrow; }
 const birdKey = BIRD_PARAM;
 const bird = getBirdByKey(birdKey);
 
@@ -601,23 +714,21 @@ const DEFAULT_STATE = {
   cameraOn: false,
 };
 
-let state = structuredClone(DEFAULT_STATE);
+let state = deepClone(DEFAULT_STATE);
 
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY(birdKey));
     if(!raw) return;
     const parsed = JSON.parse(raw);
-    state = { ...structuredClone(DEFAULT_STATE), ...parsed };
+    state = { ...deepClone(DEFAULT_STATE), ...parsed };
   }catch(e){}
 }
 function saveState(){
-  try{
-    localStorage.setItem(STORAGE_KEY(birdKey), JSON.stringify(state));
-  }catch(e){}
+  try{ localStorage.setItem(STORAGE_KEY(birdKey), JSON.stringify(state)); }catch(e){}
 }
 function resetState(){
-  state = structuredClone(DEFAULT_STATE);
+  state = deepClone(DEFAULT_STATE);
   saveState();
 }
 
@@ -634,6 +745,7 @@ const elHintLeft = $("hintLeft");
 const elBirdCanvas = $("birdCanvas");
 const elClueChips = $("clueChips");
 const toast = $("toast");
+const feedAnim = $("feedAnim");
 
 const btnCamera = $("btnCamera");
 const btnFeed = $("btnFeed");
@@ -646,10 +758,22 @@ const stepDots = $("stepDots");
 const clueBox = $("clueBox");
 const optionsGrid = $("optionsGrid");
 const closeQuiz = $("closeQuiz");
-const btnNext = $("btnNext");
-const btnGiveUp = $("btnGiveUp");
+const btnCloseQuiz2 = $("btnCloseQuiz2");
 const quizTitle = $("quizTitle");
 const btnHintQuiz = $("btnHintQuiz");
+
+const aiModal = $("aiModal");
+const aiText = $("aiText");
+const closeAi = $("closeAi");
+const aiOk = $("aiOk");
+
+const assembleModal = $("assembleModal");
+const assembleTitle = $("assembleTitle");
+const assembleTag = $("assembleTag");
+const assembleBird = $("assembleBird");
+const assembleSummary = $("assembleSummary");
+const closeAssemble = $("closeAssemble");
+const btnAssembleNext = $("btnAssembleNext");
 
 const revealModal = $("revealModal");
 const revealName = $("revealName");
@@ -666,16 +790,21 @@ const closeStartOverlay = $("closeStartOverlay");
 const scanOverlay = $("scanOverlay");
 const scanHintText = $("scanHintText");
 const scanNeedText = $("scanNeedText");
+const scanBadge = $("scanBadge");
 const btnStopScan = $("btnStopScan");
 const btnStopScan2 = $("btnStopScan2");
+const scanPreview = $("scanPreview");
+const scanPctx = scanPreview.getContext("2d", { willReadFrequently:true });
 
 /** ===========================
  *  6) Toast
  * =========================== */
-function showToast(msg){
+let toastTimer = 0;
+function showToast(msg, ms=2600){
   toast.textContent = msg;
   toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"), 1700);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove("show"), ms);
 }
 
 /** ===========================
@@ -722,7 +851,7 @@ function renderCounters(){
   elPendingText.textContent = state.pendingPart ? STEPS.find(s=>s.key===state.pendingPart).label : "—";
 
   btnQuiz.disabled = (count < 5) || !!state.pendingPart;
-  btnScan.disabled = !state.pendingPart; // 只有待掃時可按
+  btnScan.disabled = !state.pendingPart;
 
   const nextIdx = Math.max(0, STEPS.findIndex(s=>!state.solved[s.key]));
   btnQuiz.textContent = `開始辨認（${Math.min(nextIdx+1,5)}/5）`;
@@ -829,7 +958,26 @@ function headShape(pal){
 }
 
 /** ===========================
- * 10) Grant clue
+ * 10) Feed animation
+ * =========================== */
+function playFeedAnim(){
+  feedAnim.classList.remove("show");
+  void feedAnim.offsetWidth;
+  feedAnim.classList.add("show");
+  setTimeout(()=>feedAnim.classList.remove("show"), 950);
+}
+
+/** ===========================
+ * 11) Scan guidance text (use bird feature)
+ * =========================== */
+function getGuideText(partKey){
+  // 用該部位線索的第一句當「該鳥特徵」，符合你的需求
+  const pool = bird.cluePool[partKey] || [];
+  return pool[0] || "請依線索觀察圖卡特徵。";
+}
+
+/** ===========================
+ * 12) Grant clue
  * =========================== */
 function grantClue(part){
   const pool = bird.cluePool[part];
@@ -842,12 +990,13 @@ function grantClue(part){
 }
 
 /** ===========================
- * 11) Feed bird (drop => pendingPart)
+ * 13) Feed bird (drop => pendingPart)
  * =========================== */
 function feedBird(){
+  playFeedAnim();
+
   if(state.pendingPart){
-    showToast(`請先掃描【${STEPS.find(s=>s.key===state.pendingPart).label}】線索卡`);
-    openScan();
+    openScan(); // 已有待掃就直接開掃描
     return;
   }
   const missing = STEPS.map(s=>s.key).filter(k=>!state.clues[k]);
@@ -860,19 +1009,34 @@ function feedBird(){
   saveState();
   renderChips();
   renderCounters();
-  showToast(`掉落線索：請掃描【${bird.name}｜${STEPS.find(s=>s.key===part).label}】線索卡`);
-  openScan(); // 餵鳥後直接開掃描
+
+  // 掃描提示要是該鳥特徵（你要求的）
+  const targetLabel = STEPS.find(s=>s.key===part).label;
+  const guide = getGuideText(part);
+  showToast(`掉落線索：請找「${bird.name}｜${targetLabel}」線索卡`);
+
+  openScan();
+  setScanMessage(`請找線索卡中符合「${guide}」的小鳥，並掃背面 QR。`, "info");
 }
 
 /** ===========================
- * 12) In-page QR scanning (use camera stream)
+ * 14) In-page QR scanning + preview
  * =========================== */
 let scanning = false;
 let scanRaf = 0;
 let scanCooldownUntil = 0;
+let lastScanMsgAt = 0;
 
-const scanCanvas = document.createElement("canvas");
-const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
+const offCanvas = document.createElement("canvas");
+const offCtx = offCanvas.getContext("2d", { willReadFrequently: true });
+
+function setScanMessage(text, type="info"){
+  // type: info / ok / bad
+  const color = (type==="ok") ? "rgba(46,125,50,.10)" : (type==="bad") ? "rgba(198,40,40,.10)" : "rgba(255,255,255,.72)";
+  scanHintText.style.background = color;
+  scanHintText.textContent = text;
+  lastScanMsgAt = Date.now();
+}
 
 function openScan(){
   if(!state.cameraOn){
@@ -885,13 +1049,21 @@ function openScan(){
     return;
   }
   if(typeof jsQR !== "function"){
-    showToast("掃描功能載入失敗：請重新整理（加 ?v=2）");
+    showToast("掃描功能載入失敗：請重新整理（把網址最後的 v= 改大）");
     return;
   }
-  scanNeedText.textContent = `${bird.name}｜${STEPS.find(s=>s.key===state.pendingPart).label}`;
-  scanHintText.textContent = "請把線索卡背面的 QR 對準鏡頭。";
+
+  const targetLabel = STEPS.find(s=>s.key===state.pendingPart).label;
+  scanNeedText.textContent = `${bird.name}｜${targetLabel}`;
+  scanBadge.textContent = "掃描中…";
+
+  // 初始化訊息：該鳥特徵提示
+  const guide = getGuideText(state.pendingPart);
+  setScanMessage(`請找線索卡中符合「${guide}」的小鳥，並掃背面 QR。`, "info");
+
   scanOverlay.classList.remove("hidden");
   scanning = true;
+  scanCooldownUntil = 0;
   scanLoop();
 }
 
@@ -901,92 +1073,196 @@ function closeScan(){
   if(scanRaf) cancelAnimationFrame(scanRaf);
 }
 
+function drawReticle(ctx, w, h, color="rgba(240,193,75,.9)"){
+  // 置中掃描框
+  const boxW = Math.round(w * 0.62);
+  const boxH = Math.round(h * 0.52);
+  const x = Math.round((w - boxW)/2);
+  const y = Math.round((h - boxH)/2);
+  const r = 16;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 4;
+
+  // 角落框
+  function corner(x1,y1,dirX,dirY){
+    ctx.beginPath();
+    ctx.moveTo(x1, y1 + dirY*r);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x1 + dirX*r, y1);
+    ctx.stroke();
+  }
+  corner(x, y, 1, 1);
+  corner(x+boxW, y, -1, 1);
+  corner(x, y+boxH, 1, -1);
+  corner(x+boxW, y+boxH, -1, -1);
+
+  // 淡淡遮罩
+  ctx.fillStyle = "rgba(0,0,0,.15)";
+  ctx.fillRect(0,0,w,h);
+  ctx.clearRect(x,y,boxW,boxH);
+
+  // 扫描线
+  const t = (Date.now()%1200)/1200;
+  const lineY = y + Math.round(t * boxH);
+  ctx.fillStyle = "rgba(240,193,75,.45)";
+  ctx.fillRect(x, lineY, boxW, 3);
+
+  ctx.restore();
+}
+
+function drawQrBox(ctx, loc){
+  if(!loc) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(46,125,50,.95)";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(loc.topLeftCorner.x, loc.topLeftCorner.y);
+  ctx.lineTo(loc.topRightCorner.x, loc.topRightCorner.y);
+  ctx.lineTo(loc.bottomRightCorner.x, loc.bottomRightCorner.y);
+  ctx.lineTo(loc.bottomLeftCorner.x, loc.bottomLeftCorner.y);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
 function scanLoop(){
   if(!scanning) return;
 
   const video = $("camera");
-  if(video.readyState >= 2){
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+  const vw = video.videoWidth || 0;
+  const vh = video.videoHeight || 0;
 
-    const targetW = 640;
-    const targetH = Math.round(targetW * (h / w));
+  if(video.readyState >= 2 && vw > 0 && vh > 0){
+    // 用 16:9 的輸出，讓 scanPreview 好看
+    const outW = 960;
+    const outH = 540;
 
-    scanCanvas.width = targetW;
-    scanCanvas.height = targetH;
-    scanCtx.drawImage(video, 0, 0, targetW, targetH);
+    // 取 video 中間區域裁成 16:9
+    const srcAspect = vw / vh;
+    const dstAspect = outW / outH;
+    let sx=0, sy=0, sw=vw, sh=vh;
+    if(srcAspect > dstAspect){
+      // 太寬，裁左右
+      sh = vh;
+      sw = Math.round(vh * dstAspect);
+      sx = Math.round((vw - sw)/2);
+      sy = 0;
+    }else{
+      // 太高，裁上下
+      sw = vw;
+      sh = Math.round(vw / dstAspect);
+      sx = 0;
+      sy = Math.round((vh - sh)/2);
+    }
+
+    // 畫到預覽 canvas
+    scanPctx.drawImage(video, sx, sy, sw, sh, 0, 0, outW, outH);
+
+    // 同步畫到 offCanvas 供 jsQR
+    offCanvas.width = outW;
+    offCanvas.height = outH;
+    offCtx.drawImage(scanPreview, 0, 0);
+
+    // reticle 疊加（在預覽上）
+    drawReticle(scanPctx, outW, outH);
 
     const now = Date.now();
     if(now >= scanCooldownUntil){
-      const img = scanCtx.getImageData(0, 0, targetW, targetH);
-      const code = jsQR(img.data, targetW, targetH, { inversionAttempts: "dontInvert" });
+      const img = offCtx.getImageData(0, 0, outW, outH);
+      const code = jsQR(img.data, outW, outH, { inversionAttempts: "dontInvert" });
 
       if(code && code.data){
+        // 畫出偵測到的 QR 框（讓人感覺「真的在掃」）
+        drawQrBox(scanPctx, code.location);
+
         const result = handleScannedText(code.data);
         if(result === "success"){
-          closeScan();
+          scanBadge.textContent = "讀取成功";
+          setTimeout(()=>closeScan(), 500);
           return;
         }else if(result === "wrong"){
-          scanCooldownUntil = now + 800;
+          scanBadge.textContent = "掃描到 QR，但不符合";
+          scanCooldownUntil = now + 1200; // 錯誤冷卻，避免一直跳
         }
+      }else{
+        // 沒掃到 QR 時，維持掃描中
+        scanBadge.textContent = "掃描中…";
       }
     }
+  }
+
+  // 若掃描訊息太久未更新，自動回到「指引」訊息（避免卡在錯誤訊息）
+  if(state.pendingPart && Date.now() - lastScanMsgAt > 5200){
+    const guide = getGuideText(state.pendingPart);
+    setScanMessage(`請找線索卡中符合「${guide}」的小鳥，並掃背面 QR。`, "info");
   }
 
   scanRaf = requestAnimationFrame(scanLoop);
 }
 
 function handleScannedText(text){
-  // 你的線索卡 QR 是網址：?bird=...&claim=...
   let url;
-  try{
-    url = new URL(text);
-  }catch(e){
-    return "ignore";
-  }
+  try{ url = new URL(text); }catch(e){ return "ignore"; }
 
   const b = url.searchParams.get("bird");
   const claim = url.searchParams.get("claim");
 
   if(!claim){
-    showToast("這不是線索卡 QR（找不到 claim）");
+    setScanMessage("這張卡不是線索卡（找不到 claim），請再觀察看看。", "bad");
+    showToast("不是線索卡 QR，請再觀察看看。");
     return "wrong";
   }
 
-  // 每隻鳥各自線索卡：鳥不一致就拒絕
+  const targetPart = state.pendingPart;
+  const targetLabel = STEPS.find(s=>s.key===targetPart).label;
+  const guide = getGuideText(targetPart);
+
+  // 1) 鳥不對：不要說「你掃到哪隻」，只說「不是本鳥」
   if(b && b !== birdKey){
-    showToast(`掃錯鳥：這張是「${getBirdByKey(b).name}」的線索卡`);
+    const msg = `這不是「${bird.name}」的線索卡喔，再觀察看看。\n\n「${bird.name}｜${targetLabel}」的特徵是：\n「${guide}」`;
+    setScanMessage(msg, "bad");
+    showToast(`不是「${bird.name}」的線索卡，再試一次。`, 3200);
     return "wrong";
   }
 
-  if(!state.pendingPart){
-    showToast("請先餵鳥讓系統指定待掃部位");
+  // 2) 沒有待掃
+  if(!targetPart){
+    const msg = "請先按「餵鳥（掉落線索）」讓系統指定要掃的部位。";
+    setScanMessage(msg, "bad");
+    showToast("請先餵鳥讓系統指定待掃部位。", 2600);
     return "wrong";
   }
 
-  if(claim !== state.pendingPart){
-    showToast(`掃錯部位：目前需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
+  // 3) 部位不對：不要說你掃到什麼，只說「不是本鳥的這個部位」
+  if(claim !== targetPart){
+    const msg = `這不是「${bird.name}」的「${targetLabel}」喔，再觀察看看。\n\n「${bird.name}｜${targetLabel}」的特徵是：\n「${guide}」`;
+    setScanMessage(msg, "bad");
+    showToast(`不是「${bird.name}」的「${targetLabel}」，再試一次。`, 3200);
     return "wrong";
   }
 
+  // success
   grantClue(claim);
-  showToast(`獲得線索：${STEPS.find(s=>s.key===claim).label}`);
+  setScanMessage(`✅ 獲得線索：「${bird.name}｜${targetLabel}」`, "ok");
+  showToast(`獲得線索：${targetLabel}`);
   return "success";
 }
 
 /** ===========================
- * 13) Fallback: claim from URL (if external scanner opens link)
+ * 15) Fallback: claim from URL (external scanner)
  * =========================== */
 function handleClaimFromURLIfAny(){
   if(!CLAIM) return false;
-  // If link opens directly, treat as scanning result.
   if(!state.pendingPart){
-    showToast("尚未掉落線索：請先按餵鳥再掃卡");
+    showToast("尚未掉落線索：請先按餵鳥再掃卡", 3000);
     setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
     return true;
   }
   if(CLAIM !== state.pendingPart){
-    showToast(`掃錯部位：目前需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
+    const targetLabel = STEPS.find(s=>s.key===state.pendingPart).label;
+    showToast(`不是「${bird.name}」的「${targetLabel}」，再觀察看看`, 3000);
     setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
     return true;
   }
@@ -997,7 +1273,7 @@ function handleClaimFromURLIfAny(){
 }
 
 /** ===========================
- * 14) Quiz
+ * 16) Quiz flow (answer -> show assemble -> next)
  * =========================== */
 function openQuiz(){
   if(Object.keys(state.clues).length < 5){
@@ -1005,12 +1281,13 @@ function openQuiz(){
     return;
   }
   if(state.pendingPart){
-    showToast("尚有待掃線索卡：請先掃卡完成收集");
+    showToast("尚有待掃線索卡：請先掃卡完成收集", 3200);
     return;
   }
   quizModal.classList.remove("hidden");
   quizTitle.textContent = `辨認鳥類：${bird.name}`;
   buildStepDots();
+
   const idx = STEPS.findIndex(s=>!state.solved[s.key]);
   state.currentStep = (idx>=0)?idx:0;
   saveState();
@@ -1025,25 +1302,11 @@ function buildStepDots(){
     const d = document.createElement("div");
     d.className = "dot";
     d.textContent = String(idx+1);
-    d.title = `${idx+1}. ${s.label}`;
-    d.addEventListener("click", ()=>{
-      const maxIdx = Object.keys(state.solved).length;
-      if(idx <= maxIdx){
-        state.currentStep = idx;
-        saveState();
-        renderStep();
-      }else{
-        showToast("請依序作答");
-      }
-    });
     stepDots.appendChild(d);
   });
 }
 
 function renderStep(){
-  btnNext.disabled = true;
-  btnHintQuiz.disabled = (state.hintLeft <= 0);
-
   const part = STEPS[state.currentStep].key;
 
   [...stepDots.children].forEach((el, idx)=>{
@@ -1054,13 +1317,15 @@ function renderStep(){
   });
 
   const q = bird.quiz[part];
-  const collected = state.clues[part]?.text || "（尚未收集到此部位線索，請回到主畫面餵鳥並掃卡）";
+  const collected = state.clues[part]?.text || "（尚未收集到此部位線索）";
+
+  // 依你的要求改 UI 文案
   clueBox.innerHTML = `
     <div style="font-weight:900;font-size:16px;margin-bottom:6px">${q.prompt}</div>
-    <div>你已收集的線索：<strong>${escapeHtml(collected)}</strong></div>
-    <small>答對 → 逐步拼裝部位；答錯 → 需要重新收集 5 張線索。</small>
+    <div>你收集到的線索：<strong>${escapeHtml(collected)}</strong></div>
   `;
 
+  // options
   optionsGrid.innerHTML = "";
   q.options.forEach(optKey=>{
     const opt = OPTION_LIB[part][optKey];
@@ -1076,6 +1341,8 @@ function renderStep(){
     card.addEventListener("click", ()=> chooseOption(part, optKey, card));
     optionsGrid.appendChild(card);
   });
+
+  btnHintQuiz.disabled = (state.hintLeft <= 0);
 }
 
 function chooseOption(part, optKey, cardEl){
@@ -1091,20 +1358,22 @@ function chooseOption(part, optKey, cardEl){
     const prev = state.assembledCount;
     state.assembledCount = Math.min(5, Object.keys(state.solved).length);
     saveState();
+
+    // 先在主畫面拼裝（但玩家會在下一個 modal 看得到結果）
     animateAssemble(prev, state.assembledCount);
 
-    showToast("答對！拼出一個部位");
-    btnNext.disabled = false;
+    // 答對：關閉題目 -> 顯示拼裝結果 -> 下一步再回題目
+    setTimeout(()=>{
+      closeQuizModal();
+      openAssembleModal(part);
+    }, 250);
 
-    if(Object.keys(state.solved).length === 5){
-      setTimeout(()=>{
-        closeQuizModal();
-        openReveal();
-      }, 800);
-    }
   }else{
     cardEl.classList.add("wrong");
-    showToast("答錯了：線索重置，請重新收集");
+
+    // 答錯：自動重置（你要求）
+    showToast("答錯：已重置，請重新收集 5 張線索", 3600);
+
     setTimeout(()=>{
       closeQuizModal();
       resetState();
@@ -1112,46 +1381,126 @@ function chooseOption(part, optKey, cardEl){
       renderBird(0);
       renderChips();
       renderCounters();
-    }, 900);
+    }, 550);
   }
 }
 
-function nextStep(){
-  const nextIdx = STEPS.findIndex(s=>!state.solved[s.key]);
-  if(nextIdx >= 0){
-    state.currentStep = nextIdx;
-    saveState();
-    renderStep();
-  }else{
-    closeQuizModal();
+function openAssembleModal(partJustSolved){
+  const label = STEPS.find(s=>s.key===partJustSolved).label;
+  assembleTitle.textContent = "答對！已拼上部位";
+  assembleTag.textContent = `${bird.name}｜${label}`;
+  assembleBird.innerHTML = `<div style="width:min(520px,92vw)">${renderAssembleBirdSVG()}</div>`;
+
+  // 拼裝結果說明：也用該部位線索第一句（符合你「特徵」的概念）
+  assembleSummary.textContent = `你完成了「${label}」。觀察重點：${getGuideText(partJustSolved)}`;
+
+  const doneCount = Object.keys(state.solved).length;
+  btnAssembleNext.textContent = (doneCount >= 5) ? "完成" : "下一步";
+  assembleModal.classList.remove("hidden");
+}
+
+function closeAssembleModal(){ assembleModal.classList.add("hidden"); }
+
+function assembleNext(){
+  closeAssembleModal();
+  const doneCount = Object.keys(state.solved).length;
+  if(doneCount >= 5){
     openReveal();
+    return;
   }
+  // 下一題
+  const nextIdx = STEPS.findIndex(s=>!state.solved[s.key]);
+  state.currentStep = (nextIdx>=0)?nextIdx:0;
+  saveState();
+  openQuiz();
+}
+
+function renderAssembleBirdSVG(){
+  // 用跟主畫面同一套 renderBird 的結果，但在 modal 中顯示完整目前 assembledCount 的圖
+  const pal = bird.palette;
+  const assembled = state.assembledCount;
+  const showLegs = assembled >= 1;
+  const showBody = assembled >= 2;
+  const showWing = assembled >= 3;
+  const showTail = assembled >= 4;
+  const showHead = assembled >= 5;
+
+  return `
+  <svg class="${assembled===5 ? "bob" : ""}" viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg" aria-label="assemble bird">
+    <ellipse cx="260" cy="210" rx="120" ry="18" fill="rgba(0,0,0,.12)"/>
+    ${showTail ? tailShape(pal.tail) : ""}
+    ${showBody ? `<ellipse cx="270" cy="135" rx="120" ry="70" fill="${pal.body}"/>
+      <ellipse cx="290" cy="155" rx="95" ry="52" fill="${pal.belly}" opacity=".92"/>` : ""}
+    ${showWing ? `<path d="M210 165c35-78 124-98 165-40-20 70-86 110-165 40z"
+          fill="${pal.wing}" opacity=".95"/>
+      <path d="M230 150c60-40 105-35 130 5"
+          stroke="rgba(255,255,255,.35)" stroke-width="7" stroke-linecap="round" opacity=".45"/>` : ""}
+    ${showLegs ? `<path d="M250 185c8 18 2 30-8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M290 185c-8 18-2 30 8 44" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M222 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>
+      <path d="M278 232h40" stroke="${pal.legs}" stroke-width="8" stroke-linecap="round"/>` : ""}
+    ${showHead ? headShape(pal) : ""}
+  </svg>`;
 }
 
 /** ===========================
- * 15) Hint (quiz only)
+ * 17) AI hint (modal + typing)
  * =========================== */
-function hintForCurrentStep(){
-  if(state.hintLeft <= 0){ showToast("提示已用完"); return; }
-  const part = STEPS[state.currentStep].key;
+let typingTimer = 0;
 
-  const pool = bird.hints[part] || ["回到線索句，找最具辨識度的詞。"];
-  const used = state.usedHints[part] || [];
-  let pick = 0;
-  for(let i=0;i<pool.length;i++){
-    if(!used.includes(i)){ pick = i; break; }
+function openAiHint(){
+  if(state.hintLeft <= 0){
+    showToast("AI 提示已用完");
+    return;
   }
-  used.push(pick);
-  state.usedHints[part] = used;
+  const part = STEPS[state.currentStep].key;
+  const label = STEPS[state.currentStep].label;
+  const clue = state.clues[part]?.text || getGuideText(part);
+  const bullets = bird.ai?.[part] || ["把線索拆成『顏色/形狀/有無記號』三個觀察點。"];
+
+  // 扣次數
   state.hintLeft -= 1;
   saveState();
   renderCounters();
-  btnHintQuiz.disabled = (state.hintLeft <= 0);
-  showToast(`提示：${pool[pick]}`);
+
+  // 組合更像 AI 的提示文字
+  const text =
+`AI 助教：我先把你的線索拆成「可以看的重點」——
+
+【目前部位】${bird.name}｜${label}
+【你的線索】「${clue}」
+
+建議觀察步驟：
+- ${bullets[0]}
+- ${bullets[1] || "先排除明顯不符的選項，再比較剩下兩個。"}
+${bullets[2] ? "- " + bullets[2] : ""}
+
+小提醒：提示不會告訴你正確答案，只會把「要看什麼」說清楚。`;
+
+  aiModal.classList.remove("hidden");
+  typeText(aiText, text, 12);
+}
+
+function closeAiModal(){
+  aiModal.classList.add("hidden");
+  clearInterval(typingTimer);
+}
+
+function typeText(el, text, speedMs=14){
+  clearInterval(typingTimer);
+  el.textContent = "";
+  let i = 0;
+  typingTimer = setInterval(()=>{
+    el.textContent += text[i] || "";
+    i++;
+    if(i >= text.length){
+      clearInterval(typingTimer);
+    }
+  }, speedMs);
 }
 
 /** ===========================
- * 16) Reveal
+ * 18) Reveal
  * =========================== */
 function openReveal(){
   revealModal.classList.remove("hidden");
@@ -1182,18 +1531,20 @@ function renderFinalBirdSVG(){
 }
 
 /** ===========================
- * 17) Misc
+ * 19) Misc
  * =========================== */
 function escapeHtml(s){
   return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 function copyLink(){
   const url = location.origin + location.pathname + `?bird=${encodeURIComponent(birdKey)}`;
-  navigator.clipboard?.writeText(url).then(()=>showToast("已複製連結")).catch(()=>showToast("複製失敗：請手動複製網址列"));
+  navigator.clipboard?.writeText(url)
+    .then(()=>showToast("已複製連結"))
+    .catch(()=>showToast("複製失敗：請手動複製網址列"));
 }
 
 /** ===========================
- * 18) Init
+ * 20) Init
  * =========================== */
 function init(){
   loadState();
@@ -1212,7 +1563,7 @@ function init(){
   renderChips();
   renderCounters();
 
-  // Fallback: if external scanner opened ?claim=... (won't be used when scanning inside page)
+  // external scanner fallback
   if(handleClaimFromURLIfAny()) return;
 
   // Try auto-start camera (iOS will likely block => show overlay)
@@ -1220,25 +1571,19 @@ function init(){
     if(!ok) startOverlay.classList.remove("hidden");
   });
 
-  // Manual camera button (still kept)
+  // Manual camera start
   btnCamera.addEventListener("click", async ()=>{
     const ok = await startCamera(false);
     if(ok) startOverlay.classList.add("hidden");
   });
-
-  // Overlay one-tap start (recommended)
   btnStartCameraNow.addEventListener("click", async ()=>{
     const ok = await startCamera(false);
     if(ok) startOverlay.classList.add("hidden");
   });
   closeStartOverlay.addEventListener("click", ()=> startOverlay.classList.add("hidden"));
 
-  btnFeed.addEventListener("click", ()=>{
-    feedBird();
-    renderChips();
-    renderCounters();
-  });
-
+  // main actions
+  btnFeed.addEventListener("click", feedBird);
   btnScan.addEventListener("click", openScan);
   btnStopScan.addEventListener("click", closeScan);
   btnStopScan2.addEventListener("click", closeScan);
@@ -1254,19 +1599,19 @@ function init(){
     showToast("已重置本鳥進度");
   });
 
+  // quiz / ai
   closeQuiz.addEventListener("click", closeQuizModal);
-  btnNext.addEventListener("click", nextStep);
-  btnGiveUp.addEventListener("click", ()=>{
-    showToast("重置並重新收集線索");
-    closeQuizModal();
-    resetState();
-    loadState();
-    renderBird(0);
-    renderChips();
-    renderCounters();
-  });
-  btnHintQuiz.addEventListener("click", hintForCurrentStep);
+  btnCloseQuiz2.addEventListener("click", closeQuizModal);
+  btnHintQuiz.addEventListener("click", openAiHint);
 
+  closeAi.addEventListener("click", closeAiModal);
+  aiOk.addEventListener("click", closeAiModal);
+
+  // assemble
+  closeAssemble.addEventListener("click", closeAssembleModal);
+  btnAssembleNext.addEventListener("click", assembleNext);
+
+  // reveal
   closeReveal.addEventListener("click", closeRevealModal);
   btnReplay.addEventListener("click", ()=>{
     closeRevealModal();
