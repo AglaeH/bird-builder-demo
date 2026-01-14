@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Bird Builder AR Demo</title>
+
+  <!-- QR decoder -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
   <style>
     :root{
       --bg:#0b1220;
@@ -204,8 +208,8 @@
       50%{transform:translateY(-6px);}
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
+
 <body>
 <div id="app">
   <video id="camera" autoplay playsinline muted></video>
@@ -227,7 +231,7 @@
         <div class="birdCanvas" id="birdCanvas"></div>
         <div class="hintRow" id="clueChips"></div>
         <div style="font-size:12px;opacity:.9;text-align:center;line-height:1.35">
-          流程：按<strong>餵鳥</strong> → 系統指定「要掃哪張線索卡」→ 掃對才獲得線索。<br/>
+          流程：按<strong>餵鳥</strong> → 系統指定「要掃哪張線索卡」→ 按<strong>掃描線索卡</strong>（或餵鳥後自動開掃描）→ 掃對才獲得線索。<br/>
           集滿 5 張線索 → <strong>開始辨認（1–5）</strong>；答對會<strong>慢慢拼出部位</strong>。
         </div>
       </div>
@@ -260,8 +264,8 @@
 
       <div class="footer">
         <div class="left">
-          <div class="kpi" id="kpiText">提示只在答題時可用。</div>
-          <button class="btnSmall secondary" id="btnHintQuiz">提示</button>
+          <div class="kpi" id="kpiText">提示只在答題時可用；不爆雷，只引導觀察重點。</div>
+          <button class="btnSmall secondary" id="btnHintQuiz">提示（不爆雷）</button>
         </div>
         <div class="right">
           <button class="btnSmall btnWarn" id="btnGiveUp">答錯重來</button>
@@ -285,44 +289,46 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
           <button class="btnPrimary" id="btnReplay">再玩一次</button>
           <button class="secondary" id="btnCopyLink">複製此鳥連結</button>
-          <!-- START CAMERA OVERLAY (iOS needs user gesture) -->
-<div class="modal hidden" id="startOverlay">
-  <div class="box" style="max-width:560px;">
-    <div class="boxHeader">
-      <div class="title">需要啟用相機</div>
-      <button class="xbtn" id="closeStartOverlay">×</button>
-    </div>
-    <div class="content">
-      <div style="font-weight:900;font-size:16px">iPhone/Safari：相機必須由點擊觸發</div>
-      <div style="color:var(--muted);line-height:1.45">
-        請點下方按鈕啟動一次相機。之後你就不需要再按「啟動相機」了。
-      </div>
-      <button class="btnSmall btnPrimary" id="btnStartCameraNow">點一下開啟相機</button>
-    </div>
-  </div>
-</div>
-
-<!-- SCAN CLUE CARD OVERLAY -->
-<div class="modal hidden" id="scanOverlay">
-  <div class="box" style="max-width:560px;">
-    <div class="boxHeader">
-      <div class="title">掃描線索卡</div>
-      <button class="xbtn" id="btnStopScan">×</button>
-    </div>
-    <div class="content">
-      <div class="clueBox" id="scanHintText">請把線索卡背面的 QR 對準鏡頭。</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.45">
-        目前需要掃描：<strong id="scanNeedText">—</strong><br/>
-        建議：QR 佔畫面 1/4 以上、保持穩定 1 秒、避免反光。
-      </div>
-      <button class="btnSmall secondary" id="btnStopScan2">取消掃描</button>
-    </div>
-  </div>
-</div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- START CAMERA OVERLAY (iOS needs user gesture) -->
+  <div class="modal hidden" id="startOverlay">
+    <div class="box" style="max-width:560px;">
+      <div class="boxHeader">
+        <div class="title">需要啟用相機</div>
+        <button class="xbtn" id="closeStartOverlay">×</button>
+      </div>
+      <div class="content">
+        <div style="font-weight:900;font-size:16px">iPhone/Safari 規則：相機必須由點擊觸發</div>
+        <div style="color:var(--muted);line-height:1.45">
+          請點下方按鈕啟動一次相機。之後你就不需要再按「啟動相機」了。
+        </div>
+        <button class="btnSmall btnPrimary" id="btnStartCameraNow">點一下開啟相機</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN CLUE CARD OVERLAY -->
+  <div class="modal hidden" id="scanOverlay">
+    <div class="box" style="max-width:560px;">
+      <div class="boxHeader">
+        <div class="title">掃描線索卡</div>
+        <button class="xbtn" id="btnStopScan">×</button>
+      </div>
+      <div class="content">
+        <div class="clueBox" id="scanHintText">請把線索卡背面的 QR 對準鏡頭。</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.45">
+          目前需要掃描：<strong id="scanNeedText">—</strong><br/>
+          建議：QR 佔畫面 1/4 以上、保持穩定 1 秒、避免反光。
+        </div>
+        <button class="btnSmall secondary" id="btnStopScan2">取消掃描</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -330,7 +336,7 @@
  *  0) Query params / storage
  * =========================== */
 const qs = new URLSearchParams(location.search);
-const CLAIM = qs.get("claim");                 // legs/body/wing/tail/head
+const CLAIM = qs.get("claim");                 // legs/body/wing/tail/head (fallback: if you open by external scanner)
 const START = qs.get("start") === "1";         // start=1 => reset this bird
 const BIRD_PARAM = qs.get("bird") || localStorage.getItem("bbdemo:lastBird") || "sparrow";
 localStorage.setItem("bbdemo:lastBird", BIRD_PARAM);
@@ -585,13 +591,13 @@ const bird = getBirdByKey(birdKey);
  *  4) State + persistence
  * =========================== */
 const DEFAULT_STATE = {
-  clues: {},            // { partKey: {text} }
-  solved: {},           // { partKey: true }
-  currentStep: 0,       // 0..4
-  assembledCount: 0,    // 0..5
+  clues: {},
+  solved: {},
+  currentStep: 0,
+  assembledCount: 0,
   hintLeft: 2,
-  usedHints: {},        // { partKey: [idx...] }
-  pendingPart: null,    // awaiting scan
+  usedHints: {},
+  pendingPart: null,
   cameraOn: false,
 };
 
@@ -616,9 +622,10 @@ function resetState(){
 }
 
 /** ===========================
- *  5) DOM
+ *  5) DOM helpers
  * =========================== */
 const $ = (id)=>document.getElementById(id);
+
 const elBirdName = $("birdName");
 const elBirdSub = $("birdSub");
 const elClueCount = $("clueCount");
@@ -627,21 +634,12 @@ const elHintLeft = $("hintLeft");
 const elBirdCanvas = $("birdCanvas");
 const elClueChips = $("clueChips");
 const toast = $("toast");
+
 const btnCamera = $("btnCamera");
 const btnFeed = $("btnFeed");
+const btnScan = $("btnScan");
 const btnQuiz = $("btnQuiz");
 const btnReset = $("btnReset");
-  const btnScan = $("btnScan");
-
-const startOverlay = $("startOverlay");
-const btnStartCameraNow = $("btnStartCameraNow");
-const closeStartOverlay = $("closeStartOverlay");
-
-const scanOverlay = $("scanOverlay");
-const scanHintText = $("scanHintText");
-const scanNeedText = $("scanNeedText");
-const btnStopScan = $("btnStopScan");
-const btnStopScan2 = $("btnStopScan2");
 
 const quizModal = $("quizModal");
 const stepDots = $("stepDots");
@@ -661,8 +659,27 @@ const closeReveal = $("closeReveal");
 const btnReplay = $("btnReplay");
 const btnCopyLink = $("btnCopyLink");
 
+const startOverlay = $("startOverlay");
+const btnStartCameraNow = $("btnStartCameraNow");
+const closeStartOverlay = $("closeStartOverlay");
+
+const scanOverlay = $("scanOverlay");
+const scanHintText = $("scanHintText");
+const scanNeedText = $("scanNeedText");
+const btnStopScan = $("btnStopScan");
+const btnStopScan2 = $("btnStopScan2");
+
 /** ===========================
- *  6) Camera
+ *  6) Toast
+ * =========================== */
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"), 1700);
+}
+
+/** ===========================
+ *  7) Camera
  * =========================== */
 async function startCamera(silent=false){
   try{
@@ -678,134 +695,14 @@ async function startCamera(silent=false){
     btnCamera.disabled = true;
     return true;
   }catch(e){
-    // iOS/Safari 通常會因為沒有 user gesture 而被擋
-    if(!silent) showToast("相機需要點擊授權：請點一下『開啟相機』");
+    if(!silent) showToast("相機需要點擊授權：請點一下『點一下開啟相機』");
     return false;
   }
 }
 
-// ===== In-page QR scanning (use the same camera stream) =====
-let scanning = false;
-let scanRaf = 0;
-let scanCooldownUntil = 0;
-
-const scanCanvas = document.createElement("canvas");
-const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
-
-function openScan(){
-  if(!state.pendingPart){
-    showToast("目前沒有待掃部位：請先按『餵鳥（掉落線索）』");
-    return;
-  }
-  scanNeedText.textContent = `${bird.name}｜${STEPS.find(s=>s.key===state.pendingPart).label}`;
-  scanHintText.textContent = "請把線索卡背面的 QR 對準鏡頭。";
-  scanOverlay.classList.remove("hidden");
-  scanning = true;
-  scanLoop();
-}
-
-function closeScan(){
-  scanning = false;
-  scanOverlay.classList.add("hidden");
-  if(scanRaf) cancelAnimationFrame(scanRaf);
-}
-
-function scanLoop(){
-  if(!scanning) return;
-
-  const video = $("camera");
-  // 影片準備好才能抓畫面
-  if(video.readyState >= 2){
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
-
-    // 降低解析度以提升掃碼速度（足夠用）
-    const targetW = 640;
-    const targetH = Math.round(targetW * (h / w));
-
-    scanCanvas.width = targetW;
-    scanCanvas.height = targetH;
-    scanCtx.drawImage(video, 0, 0, targetW, targetH);
-
-    // 簡單節流：避免每一幀都吐 toast
-    const now = Date.now();
-    if(now >= scanCooldownUntil){
-      const img = scanCtx.getImageData(0, 0, targetW, targetH);
-      const code = jsQR(img.data, targetW, targetH, { inversionAttempts: "dontInvert" });
-
-      if(code && code.data){
-        const handled = handleScannedText(code.data);
-        if(handled === "success"){
-          closeScan();
-          return;
-        }else if(handled === "wrong"){
-          scanCooldownUntil = now + 800;
-        }
-      }
-    }
-  }
-
-  scanRaf = requestAnimationFrame(scanLoop);
-}
-
-function handleScannedText(text){
-  // QR 內容是網址（我們的線索卡就是 ?bird=...&claim=...）
-  let url;
-  try{
-    url = new URL(text);
-  }catch(e){
-    // 不是網址就當作不處理
-    return "ignore";
-  }
-
-  const b = url.searchParams.get("bird");
-  const claim = url.searchParams.get("claim"); // legs/body/wing/tail/head
-
-  if(!claim){
-    showToast("這不是線索卡 QR（找不到 claim）");
-    return "wrong";
-  }
-
-  // 每隻鳥各自的線索卡：鳥不一致就不給
-  if(b && b !== birdKey){
-    showToast(`掃錯鳥卡：這張是「${getBirdByKey(b).name}」的線索卡`);
-    return "wrong";
-  }
-
-  if(!state.pendingPart){
-    showToast("請先按『餵鳥（掉落線索）』讓系統指定待掃部位");
-    return "wrong";
-  }
-
-  if(claim !== state.pendingPart){
-    showToast(`掃錯部位：目前需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
-    return "wrong";
-  }
-
-  grantClue(claim);
-  showToast(`獲得線索：${STEPS.find(s=>s.key===claim).label}`);
-  return "success";
-}
-
-function grantClue(part){
-  const pool = bird.cluePool[part];
-  const clue = pool[Math.floor(Math.random()*pool.length)];
-  state.clues[part] = { text: clue };
-  state.pendingPart = null;
-  saveState();
-  renderChips();
-  renderCounters();
-}
-  
 /** ===========================
- *  7) Toast + render helpers
+ *  8) Render chips / counters
  * =========================== */
-function showToast(msg){
-  toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(()=>toast.classList.remove("show"), 1700);
-}
-
 function renderChips(){
   elClueChips.innerHTML = "";
   STEPS.forEach(s=>{
@@ -824,15 +721,15 @@ function renderCounters(){
   elHintLeft.textContent = String(state.hintLeft);
   elPendingText.textContent = state.pendingPart ? STEPS.find(s=>s.key===state.pendingPart).label : "—";
 
-  // while pending scan, lock quiz
   btnQuiz.disabled = (count < 5) || !!state.pendingPart;
-  btnScan.disabled = !state.pendingPart;
+  btnScan.disabled = !state.pendingPart; // 只有待掃時可按
+
   const nextIdx = Math.max(0, STEPS.findIndex(s=>!state.solved[s.key]));
   btnQuiz.textContent = `開始辨認（${Math.min(nextIdx+1,5)}/5）`;
 }
 
 /** ===========================
- *  8) Bird render (assembled)
+ *  9) Bird render + assemble animation
  * =========================== */
 function renderBird(assembled){
   const pal = bird.palette;
@@ -932,50 +829,25 @@ function headShape(pal){
 }
 
 /** ===========================
- *  9) Claim handling (scan clue card)
- *     URL: ?bird=<bird>&claim=<part>
+ * 10) Grant clue
  * =========================== */
-function handleClaimIfAny(){
-  if(!CLAIM) return false;
-
-  // if user scanned clue card but session bird differs, we treat as wrong bird.
-  // (Because each clue card is per-bird.)
-  if(birdKey !== BIRD_PARAM){
-    // (not expected in this simplified file)
-  }
-
-  loadState();
-
-  if(!state.pendingPart){
-    showToast("尚未掉落線索：請先按「餵鳥（掉落線索）」再掃卡");
-    // back to main without claim
-    setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
-    return true;
-  }
-
-  if(CLAIM !== state.pendingPart){
-    showToast(`掃錯卡：現在需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
-    setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
-    return true;
-  }
-
-  const pool = bird.cluePool[CLAIM];
+function grantClue(part){
+  const pool = bird.cluePool[part];
   const clue = pool[Math.floor(Math.random()*pool.length)];
-  state.clues[CLAIM] = { text: clue };
+  state.clues[part] = { text: clue };
   state.pendingPart = null;
-
   saveState();
-  showToast(`獲得線索：${STEPS.find(s=>s.key===CLAIM).label}`);
-  setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
-  return true;
+  renderChips();
+  renderCounters();
 }
 
 /** ===========================
- * 10) Feed bird (drop requirement => pendingPart)
+ * 11) Feed bird (drop => pendingPart)
  * =========================== */
 function feedBird(){
   if(state.pendingPart){
     showToast(`請先掃描【${STEPS.find(s=>s.key===state.pendingPart).label}】線索卡`);
+    openScan();
     return;
   }
   const missing = STEPS.map(s=>s.key).filter(k=>!state.clues[k]);
@@ -989,11 +861,143 @@ function feedBird(){
   renderChips();
   renderCounters();
   showToast(`掉落線索：請掃描【${bird.name}｜${STEPS.find(s=>s.key===part).label}】線索卡`);
-  openScan();
+  openScan(); // 餵鳥後直接開掃描
 }
 
 /** ===========================
- * 11) Quiz modal
+ * 12) In-page QR scanning (use camera stream)
+ * =========================== */
+let scanning = false;
+let scanRaf = 0;
+let scanCooldownUntil = 0;
+
+const scanCanvas = document.createElement("canvas");
+const scanCtx = scanCanvas.getContext("2d", { willReadFrequently: true });
+
+function openScan(){
+  if(!state.cameraOn){
+    startOverlay.classList.remove("hidden");
+    showToast("請先點一下開啟相機");
+    return;
+  }
+  if(!state.pendingPart){
+    showToast("目前沒有待掃部位：請先餵鳥");
+    return;
+  }
+  if(typeof jsQR !== "function"){
+    showToast("掃描功能載入失敗：請重新整理（加 ?v=2）");
+    return;
+  }
+  scanNeedText.textContent = `${bird.name}｜${STEPS.find(s=>s.key===state.pendingPart).label}`;
+  scanHintText.textContent = "請把線索卡背面的 QR 對準鏡頭。";
+  scanOverlay.classList.remove("hidden");
+  scanning = true;
+  scanLoop();
+}
+
+function closeScan(){
+  scanning = false;
+  scanOverlay.classList.add("hidden");
+  if(scanRaf) cancelAnimationFrame(scanRaf);
+}
+
+function scanLoop(){
+  if(!scanning) return;
+
+  const video = $("camera");
+  if(video.readyState >= 2){
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+
+    const targetW = 640;
+    const targetH = Math.round(targetW * (h / w));
+
+    scanCanvas.width = targetW;
+    scanCanvas.height = targetH;
+    scanCtx.drawImage(video, 0, 0, targetW, targetH);
+
+    const now = Date.now();
+    if(now >= scanCooldownUntil){
+      const img = scanCtx.getImageData(0, 0, targetW, targetH);
+      const code = jsQR(img.data, targetW, targetH, { inversionAttempts: "dontInvert" });
+
+      if(code && code.data){
+        const result = handleScannedText(code.data);
+        if(result === "success"){
+          closeScan();
+          return;
+        }else if(result === "wrong"){
+          scanCooldownUntil = now + 800;
+        }
+      }
+    }
+  }
+
+  scanRaf = requestAnimationFrame(scanLoop);
+}
+
+function handleScannedText(text){
+  // 你的線索卡 QR 是網址：?bird=...&claim=...
+  let url;
+  try{
+    url = new URL(text);
+  }catch(e){
+    return "ignore";
+  }
+
+  const b = url.searchParams.get("bird");
+  const claim = url.searchParams.get("claim");
+
+  if(!claim){
+    showToast("這不是線索卡 QR（找不到 claim）");
+    return "wrong";
+  }
+
+  // 每隻鳥各自線索卡：鳥不一致就拒絕
+  if(b && b !== birdKey){
+    showToast(`掃錯鳥：這張是「${getBirdByKey(b).name}」的線索卡`);
+    return "wrong";
+  }
+
+  if(!state.pendingPart){
+    showToast("請先餵鳥讓系統指定待掃部位");
+    return "wrong";
+  }
+
+  if(claim !== state.pendingPart){
+    showToast(`掃錯部位：目前需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
+    return "wrong";
+  }
+
+  grantClue(claim);
+  showToast(`獲得線索：${STEPS.find(s=>s.key===claim).label}`);
+  return "success";
+}
+
+/** ===========================
+ * 13) Fallback: claim from URL (if external scanner opens link)
+ * =========================== */
+function handleClaimFromURLIfAny(){
+  if(!CLAIM) return false;
+  // If link opens directly, treat as scanning result.
+  if(!state.pendingPart){
+    showToast("尚未掉落線索：請先按餵鳥再掃卡");
+    setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
+    return true;
+  }
+  if(CLAIM !== state.pendingPart){
+    showToast(`掃錯部位：目前需要【${STEPS.find(s=>s.key===state.pendingPart).label}】`);
+    setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
+    return true;
+  }
+  grantClue(CLAIM);
+  showToast(`獲得線索：${STEPS.find(s=>s.key===CLAIM).label}`);
+  setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 900);
+  return true;
+}
+
+/** ===========================
+ * 14) Quiz
  * =========================== */
 function openQuiz(){
   if(Object.keys(state.clues).length < 5){
@@ -1007,16 +1011,13 @@ function openQuiz(){
   quizModal.classList.remove("hidden");
   quizTitle.textContent = `辨認鳥類：${bird.name}`;
   buildStepDots();
-  // start at first unsolved
   const idx = STEPS.findIndex(s=>!state.solved[s.key]);
   state.currentStep = (idx>=0)?idx:0;
   saveState();
   renderStep();
 }
 
-function closeQuizModal(){
-  quizModal.classList.add("hidden");
-}
+function closeQuizModal(){ quizModal.classList.add("hidden"); }
 
 function buildStepDots(){
   stepDots.innerHTML = "";
@@ -1053,11 +1054,11 @@ function renderStep(){
   });
 
   const q = bird.quiz[part];
-  const collected = state.clues[part]?.text || "（尚未收集到此部位線索，請先回到主畫面餵鳥並掃卡）";
+  const collected = state.clues[part]?.text || "（尚未收集到此部位線索，請回到主畫面餵鳥並掃卡）";
   clueBox.innerHTML = `
     <div style="font-weight:900;font-size:16px;margin-bottom:6px">${q.prompt}</div>
     <div>你已收集的線索：<strong>${escapeHtml(collected)}</strong></div>
-    <small>答對 → 獲得不同部位；答錯 → 需要重新收集 5 張線索。</small>
+    <small>答對 → 逐步拼裝部位；答錯 → 需要重新收集 5 張線索。</small>
   `;
 
   optionsGrid.innerHTML = "";
@@ -1081,7 +1082,6 @@ function chooseOption(part, optKey, cardEl){
   if(state.solved[part]) return;
 
   const correct = bird.quiz[part].correct;
-
   [...optionsGrid.children].forEach(el=>el.style.pointerEvents="none");
 
   if(optKey === correct){
@@ -1129,7 +1129,7 @@ function nextStep(){
 }
 
 /** ===========================
- * 12) Hint (in-quiz only, controlled)
+ * 15) Hint (quiz only)
  * =========================== */
 function hintForCurrentStep(){
   if(state.hintLeft <= 0){ showToast("提示已用完"); return; }
@@ -1147,12 +1147,11 @@ function hintForCurrentStep(){
   saveState();
   renderCounters();
   btnHintQuiz.disabled = (state.hintLeft <= 0);
-
   showToast(`提示：${pool[pick]}`);
 }
 
 /** ===========================
- * 13) Reveal
+ * 16) Reveal
  * =========================== */
 function openReveal(){
   revealModal.classList.remove("hidden");
@@ -1160,10 +1159,7 @@ function openReveal(){
   revealBird.innerHTML = `<div style="width:min(520px,92vw)">${renderFinalBirdSVG()}</div>`;
   revealSummary.textContent = bird.summary;
 }
-
-function closeRevealModal(){
-  revealModal.classList.add("hidden");
-}
+function closeRevealModal(){ revealModal.classList.add("hidden"); }
 
 function renderFinalBirdSVG(){
   const pal = bird.palette;
@@ -1186,36 +1182,27 @@ function renderFinalBirdSVG(){
 }
 
 /** ===========================
- * 14) Misc
+ * 17) Misc
  * =========================== */
 function escapeHtml(s){
   return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
-
 function copyLink(){
   const url = location.origin + location.pathname + `?bird=${encodeURIComponent(birdKey)}`;
   navigator.clipboard?.writeText(url).then(()=>showToast("已複製連結")).catch(()=>showToast("複製失敗：請手動複製網址列"));
 }
 
 /** ===========================
- * 15) Init
+ * 18) Init
  * =========================== */
 function init(){
-  // If scanning clue card, handle claim and exit (it will redirect back)
-  if(CLAIM){
-    handleClaimIfAny();
-    return;
-  }
-
-  // Load state
   loadState();
 
-  // If start=1, reset this bird session
   if(START){
     resetState();
     loadState();
-    // remove start param after short delay
     setTimeout(()=>location.replace(`${location.pathname}?bird=${encodeURIComponent(birdKey)}`), 50);
+    return;
   }
 
   elBirdName.textContent = bird.name;
@@ -1225,46 +1212,36 @@ function init(){
   renderChips();
   renderCounters();
 
-  if(state.cameraOn){
-    // Try restart camera silently? For demo simplicity, keep manual.
-    btnCamera.textContent = "啟動相機";
-  }
-// 自動嘗試開相機（iOS 若被擋就顯示 overlay）
-startCamera(true).then(ok=>{
-  if(!ok){
-    startOverlay.classList.remove("hidden");
-  }
-});
+  // Fallback: if external scanner opened ?claim=... (won't be used when scanning inside page)
+  if(handleClaimFromURLIfAny()) return;
 
-// overlay：點一下開相機
-btnStartCameraNow.addEventListener("click", async ()=>{
-  const ok = await startCamera(false);
-  if(ok) startOverlay.classList.add("hidden");
-});
-closeStartOverlay.addEventListener("click", ()=>{
-  startOverlay.classList.add("hidden");
-});
+  // Try auto-start camera (iOS will likely block => show overlay)
+  startCamera(true).then(ok=>{
+    if(!ok) startOverlay.classList.remove("hidden");
+  });
 
-  btnCamera.addEventListener("click", startCamera);
+  // Manual camera button (still kept)
+  btnCamera.addEventListener("click", async ()=>{
+    const ok = await startCamera(false);
+    if(ok) startOverlay.classList.add("hidden");
+  });
+
+  // Overlay one-tap start (recommended)
+  btnStartCameraNow.addEventListener("click", async ()=>{
+    const ok = await startCamera(false);
+    if(ok) startOverlay.classList.add("hidden");
+  });
+  closeStartOverlay.addEventListener("click", ()=> startOverlay.classList.add("hidden"));
 
   btnFeed.addEventListener("click", ()=>{
-    if(!state.cameraOn){
-      showToast("提示：建議先啟動相機（HTTPS + 允許權限）");
-    }
     feedBird();
     renderChips();
     renderCounters();
   });
-btnScan.addEventListener("click", ()=>{
-  if(!state.cameraOn){
-    startOverlay.classList.remove("hidden");
-    showToast("請先點一下開啟相機");
-    return;
-  }
-  openScan();
-});
-btnStopScan.addEventListener("click", closeScan);
-btnStopScan2.addEventListener("click", closeScan);
+
+  btnScan.addEventListener("click", openScan);
+  btnStopScan.addEventListener("click", closeScan);
+  btnStopScan2.addEventListener("click", closeScan);
 
   btnQuiz.addEventListener("click", openQuiz);
 
@@ -1288,7 +1265,6 @@ btnStopScan2.addEventListener("click", closeScan);
     renderChips();
     renderCounters();
   });
-
   btnHintQuiz.addEventListener("click", hintForCurrentStep);
 
   closeReveal.addEventListener("click", closeRevealModal);
@@ -1302,7 +1278,7 @@ btnStopScan2.addEventListener("click", closeScan);
   });
   btnCopyLink.addEventListener("click", copyLink);
 
-  showToast(`已載入：${bird.name}（按「餵鳥」→ 掃對線索卡）`);
+  showToast(`已載入：${bird.name}（餵鳥→掃描線索卡）`);
 }
 
 init();
