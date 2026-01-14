@@ -24,7 +24,7 @@
   const scanNeedText = $("#scanNeedText");
   const scanHintText = $("#scanHintText");
   const scanToast = $("#scanToast");
-  const scanBox = $("#scanBox");
+  const scanHole = $("#scanHole");
   const btnCloseScan = $("#btnCloseScan");
   const btnCancelScan = $("#btnCancelScan");
 
@@ -95,7 +95,7 @@
     state.quizStepIndex = 0;
     state.assembled = new Set();
     state.isScanning = false;
-    scanBox.classList.remove("good");
+    scanHole.classList.remove("good");
     scanToast.hidden = true;
     aiBubble.hidden = true;
     render();
@@ -160,7 +160,7 @@
     scanOverlay.classList.add("show");
     scanOverlay.setAttribute("aria-hidden","false");
     state.isScanning = true;
-    scanBox.classList.remove("good");
+    scanHole.classList.remove("good");
     scanToast.hidden = true;
     scanToast.textContent = "";
     renderScanTexts();
@@ -171,7 +171,7 @@
     state.isScanning = false;
     scanOverlay.classList.remove("show");
     scanOverlay.setAttribute("aria-hidden","true");
-    scanBox.classList.remove("good");
+    scanHole.classList.remove("good");
     scanToast.hidden = true;
   }
 
@@ -219,7 +219,7 @@
 
     if(text === expected){
       // success
-      scanBox.classList.add("good");
+      scanHole.classList.add("good");
       state.collected.add(state.needPart);
       const gotPart = state.needPart;
       state.needPart = null;

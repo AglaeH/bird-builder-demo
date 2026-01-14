@@ -7,10 +7,8 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- AR Camera -->
   <video id="cameraVideo" autoplay playsinline muted></video>
 
-  <!-- Top status bar -->
   <header class="topbar">
     <div class="pill">
       <select id="birdSelect" aria-label="選擇鳥">
@@ -20,7 +18,7 @@
         <option value="drongo">大卷尾</option>
         <option value="whiteeye">綠繡眼</option>
       </select>
-      <span class="tag" id="demoTag">demo</span>
+      <span class="tag">demo</span>
     </div>
 
     <div class="pill pill-wide">
@@ -32,13 +30,11 @@
     </div>
   </header>
 
-  <!-- Help text -->
   <section class="help">
     <p>流程：按 <b>餵鳥</b> → 系統指定「要掃哪張線索卡」→ <b>掃對</b>才獲得線索。</p>
     <p>集滿 5 張線索 → <b>開始辨認（1–5）</b>；每題答對會 <b>逐步拼出部位</b>。</p>
   </section>
 
-  <!-- Bottom buttons -->
   <nav class="bottombar">
     <button id="btnStartCamera" class="btn ghost">啟動相機</button>
     <button id="btnFeed" class="btn primary">餵鳥（掉落線索）</button>
@@ -47,37 +43,33 @@
     <button id="btnReset" class="btn ghost">重置本鳥</button>
   </nav>
 
-  <!-- Scan overlay (no black frame; uses live camera as background) -->
-  <div id="scanOverlay" class="overlay" aria-hidden="true">
-    <div class="sheet">
+  <div id="scanOverlay" class="scanOverlay" aria-hidden="true">
+    <div class="scanHudLayer" aria-hidden="true">
+      <div class="scanHole" id="scanHole">
+        <div class="scanLine"></div>
+      </div>
+      <div class="scanToast" id="scanToast" hidden></div>
+    </div>
+
+    <div class="scanSheet" role="dialog" aria-label="掃描線索卡">
       <div class="sheetHead">
         <h2>掃描線索卡</h2>
         <button id="btnCloseScan" class="iconBtn" aria-label="關閉">×</button>
       </div>
 
-      <div class="scanHud">
-        <div class="scanBox" id="scanBox">
-          <div class="scanLine"></div>
-        </div>
-        <div class="scanToast" id="scanToast" hidden></div>
+      <div class="card">
+        <div class="muted">目前需要掃描：</div>
+        <div class="strong" id="scanNeedText">—</div>
+        <div class="muted mt8">提示：</div>
+        <div id="scanHintText" class="hintText">請先按「餵鳥」，系統才會指定要掃哪張線索卡。</div>
       </div>
 
-      <div class="scanInfo">
-        <div class="card">
-          <div class="muted">目前需要掃描：</div>
-          <div class="strong" id="scanNeedText">—</div>
-          <div class="muted mt8">提示：</div>
-          <div id="scanHintText" class="hintText">請先按「餵鳥」，系統才會指定要掃哪張線索卡。</div>
-        </div>
-
-        <div class="row">
-          <button id="btnCancelScan" class="btn ghost wide">取消掃描</button>
-        </div>
+      <div class="row mt12">
+        <button id="btnCancelScan" class="btn ghost wide">取消掃描</button>
       </div>
     </div>
   </div>
 
-  <!-- Feed animation overlay -->
   <div id="feedOverlay" class="feedOverlay" aria-hidden="true">
     <div class="feedCard">
       <div class="feedTitle">餵食中…</div>
@@ -92,7 +84,6 @@
     </div>
   </div>
 
-  <!-- Quiz modal -->
   <div id="quizModal" class="modal" aria-hidden="true">
     <div class="modalPanel">
       <div class="modalHead">
@@ -100,7 +91,7 @@
         <button id="btnCloseQuiz" class="iconBtn" aria-label="關閉">×</button>
       </div>
 
-      <div class="steps" id="stepDots" aria-label="步驟"></div>
+      <div class="steps" id="stepDots"></div>
 
       <div class="promptBox">
         <div class="promptTitle" id="quizPromptTitle">—</div>
@@ -120,7 +111,6 @@
     </div>
   </div>
 
-  <!-- Assemble modal -->
   <div id="assembleModal" class="modal" aria-hidden="true">
     <div class="modalPanel">
       <div class="modalHead">
@@ -142,13 +132,9 @@
     </div>
   </div>
 
-  <!-- Small toast -->
   <div id="globalToast" class="globalToast" hidden></div>
 
-  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-
-  <!-- App -->
   <script src="./data.js"></script>
   <script src="./app.js"></script>
 </body>
