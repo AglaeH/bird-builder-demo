@@ -94,19 +94,48 @@
       <div class="steps" id="stepDots"></div>
 
       <div class="promptBox">
-        <div class="promptTitle" id="quizPromptTitle">—</div>
-        <div class="promptClue" id="quizClueText">你收集到的線索：—</div>
+        <div class="promptRow">
+          <div class="promptIcon" id="quizPartIcon" aria-hidden="true"></div>
+          <div class="promptText">
+            <div class="promptTitle" id="quizPromptTitle">—</div>
+            <div class="promptClue" id="quizClueText">你收集到的線索：—</div>
+          </div>
+        </div>
       </div>
 
       <div class="optionsGrid" id="quizOptions"></div>
 
       <div class="aiRow">
-        <button id="btnAiHint" class="btn wide">AI 提示（不爆雷）</button>
+        <button id="btnAiHint" class="btn wide">問 AI 提示（不爆雷）</button>
         <div id="aiBubble" class="aiBubble" hidden></div>
       </div>
 
       <div class="row">
         <div class="muted small">提示只在答題時可用；不爆雷，只引導觀察重點。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ask-AI dialog: user selects which part to ask about (creates a more "AI-like" interaction) -->
+  <div id="aiModal" class="modal" aria-hidden="true">
+    <div class="modalPanel">
+      <div class="modalHead">
+        <h2>問 AI（不爆雷）</h2>
+        <button id="btnCloseAi" class="iconBtn" aria-label="關閉">×</button>
+      </div>
+
+      <div class="row">
+        <div class="muted">請選擇你要詢問提示的部位（每次詢問會消耗 1 次 AI 提示）。</div>
+      </div>
+
+      <div id="aiPartPills" class="pills"></div>
+
+      <div class="row">
+        <div class="muted small">AI 只會根據你已收集的線索引導觀察，不會直接給答案。</div>
+      </div>
+
+      <div class="row">
+        <button id="btnAskAi" class="btn primary wide">詢問</button>
       </div>
     </div>
   </div>

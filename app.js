@@ -34,12 +34,18 @@
   const quizModal = $("#quizModal");
   const quizTitle = $("#quizTitle");
   const stepDots = $("#stepDots");
+  const quizPartIcon = $("#quizPartIcon");
   const quizPromptTitle = $("#quizPromptTitle");
   const quizClueText = $("#quizClueText");
   const quizOptions = $("#quizOptions");
   const btnCloseQuiz = $("#btnCloseQuiz");
   const btnAiHint = $("#btnAiHint");
   const aiBubble = $("#aiBubble");
+
+  const aiModal = $("#aiModal");
+  const btnCloseAi = $("#btnCloseAi");
+  const aiPartPills = $("#aiPartPills");
+  const btnAskAi = $("#btnAskAi");
 
   const assembleModal = $("#assembleModal");
   const assembleTitle = $("#assembleTitle");
@@ -74,6 +80,18 @@
     toastTimer: null
   };
 
+  // Ask-AI dialog state
+  let aiAskPart = null;
+
+  // Small icon shown in the quiz prompt box (visual reference)
+  const PART_ICON_KEY = {
+    legs: "legs_brown",
+    body: "body_brown",
+    wing: "wing_band",
+    tail: "tail_round",
+    head: "head_plain",
+  };
+
   // ---------- Utilities ----------
   function showToast(msg, ms = 1600){
     globalToast.textContent = msg;
@@ -82,6 +100,20 @@
     state.toastTimer = setTimeout(() => {
       globalToast.hidden = true;
     }, ms);
+  }
+
+  function normalizeQrPayload(payload){
+    const t = String(payload || "").trim();
+    if(!t) return "";
+    // Allow link-style QR codes: https://.../bird-builder-demo/?claim=sparrow_head
+    try{
+      if(t.startsWith("http://") || t.startsWith("https://")){
+        const u = new URL(t);
+        const claim = u.searchParams.get("claim");
+        if(claim) return String(claim).trim();
+      }
+    } catch(_){}
+    return t;
   }
 
   function partLabel(part){ return PART_LABEL[part] || part; }
@@ -206,7 +238,7 @@
     if(now - state.lastQrAt < 1200) return; // throttle
     state.lastQrAt = now;
 
-    const text = String(payload || "").trim();
+    const text = normalizeQrPayload(payload);
     if(!text) return;
 
     if(!state.needPart){
@@ -321,6 +353,10 @@
     const part = PART_ORDER[state.quizStepIndex];
     const clue = b.parts[part].clue;
 
+    // Visual reference for the asked part
+    const iconKey = PART_ICON_KEY[part] || (OPTION_POOLS[part] && OPTION_POOLS[part][0] ? OPTION_POOLS[part][0].icon : "head_plain");
+    quizPartIcon.innerHTML = `<div class="i">${iconSvg(iconKey)}</div>`;
+
     quizPromptTitle.textContent = `步驟${state.quizStepIndex+1}（${partLabel(part)}）：選最符合敘述的${partLabel(part)}。`;
     quizClueText.textContent = `你收集到的線索：${clue}`;
 
@@ -379,23 +415,67 @@
     openQuiz(); // next step
   }
 
-  // ---------- “AI” Hint ----------
-  function showAiHint(){
+  // ---------- “AI” Hint (deterministic, on-topic; no free-form LLM) ----------
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function openAiDialog(){
+    if(state.hintsLeft <= 0){
+      showToast("AI 提示已用完");
+      return;
+    }
+    aiAskPart = PART_ORDER[state.quizStepIndex];
+    renderAiPills();
+    setModal(aiModal, true);
+  }
+
+  function closeAiDialog(){
+    setModal(aiModal, false);
+  }
+
+  function renderAiPills(){
+    aiPartPills.innerHTML = "";
+    PART_ORDER.forEach((p) => {
+      const btn = document.createElement("button");
+      btn.className = "pill" + (p === aiAskPart ? " active" : "");
+      btn.type = "button";
+      btn.textContent = partLabel(p);
+      btn.addEventListener("click", () => {
+        aiAskPart = p;
+        renderAiPills();
+      });
+      aiPartPills.appendChild(btn);
+    });
+  }
+
+  function showAiHint(partOverride){
     if(state.hintsLeft <= 0) return;
-    state.hintsLeft -= 1;
 
     const b = bird();
-    const part = PART_ORDER[state.quizStepIndex];
+    const part = partOverride || PART_ORDER[state.quizStepIndex];
     const clue = b.parts[part].clue;
     const partName = partLabel(part);
 
-    const fn = AI_HINT_TEMPLATES[(2 - state.hintsLeft - 1) % AI_HINT_TEMPLATES.length] || AI_HINT_TEMPLATES[0];
+    const remainingBefore = state.hintsLeft;
+    state.hintsLeft -= 1;
+    const usedIndex = Math.max(0, 2 - remainingBefore);
+    const fn = AI_HINT_TEMPLATES[usedIndex % AI_HINT_TEMPLATES.length] || AI_HINT_TEMPLATES[0];
     const msg = fn(b.name, partName, clue);
 
-    aiBubble.textContent = msg;
+    const userMsg = `我想問「${b.name}｜${partName}」的提示。`;
+    aiBubble.innerHTML = `
+      <div class="chatLine user"><div class="chatMsg">${escapeHtml(userMsg)}</div></div>
+      <div class="chatLine ai"><div class="chatMsg">${escapeHtml(msg)}</div></div>
+    `;
     aiBubble.hidden = false;
 
-    render(); // update top bar AI counter
+    render(); // update top bar counters
     btnAiHint.disabled = state.hintsLeft <= 0;
   }
 
@@ -612,7 +692,12 @@
   btnCloseQuiz.addEventListener("click", closeQuiz);
 
   // AI hint
-  btnAiHint.addEventListener("click", showAiHint);
+  btnAiHint.addEventListener("click", openAiDialog);
+  btnCloseAi.addEventListener("click", closeAiDialog);
+  btnAskAi.addEventListener("click", () => {
+    showAiHint(aiAskPart);
+    closeAiDialog();
+  });
 
   // Assemble controls
   btnContinue.addEventListener("click", continueAfterAssemble);
@@ -625,6 +710,9 @@
   quizModal.addEventListener("click", (e) => {
     if(e.target === quizModal) closeQuiz();
   });
+  aiModal.addEventListener("click", (e) => {
+    if(e.target === aiModal) closeAiDialog();
+  });
   assembleModal.addEventListener("click", (e) => {
     if(e.target === assembleModal) closeAssemble();
   });
@@ -634,6 +722,7 @@
     if(e.key === "Escape"){
       closeScan();
       closeQuiz();
+      closeAiDialog();
       closeAssemble();
     }
   });
